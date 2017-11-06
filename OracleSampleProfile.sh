@@ -1,0 +1,21 @@
+## Oracle Profile for DB, APEX and ORDS
+export ORACLE_SID=orcl
+export ORACLE_BASE=/u01/app/oracle
+export ORACLE_HOME=$ORACLE_BASE/product/12.1.0/dbhome_1
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib
+export PATH=$PATH:$ORACLE_HOME/bin:$ORACLE_HOME/perl/bin:$ORACLE_HOME/OPatch:$ORACLE_HOME/jdk/bin:$ORACLE_BASE/product/12.1.0/ords
+export ORACLE_DIAG=$ORACLE_BASE/diag
+alias alert='tail -f $ORACLE_DIAG/rdbms/orcl/orcl/trace/alert_$ORACLE_SID.log'
+alias alertv='tail -f $ORACLE_DIAG/rdbms/orcl/orcl/trace/alert_$ORACLE_SID.log'
+alias oraps='ps -ef| grep -v grep | grep ora_'
+alias ordps='ps -ef|grep -v grep|grep ords.war'
+alias lsnrps='ps -ef| grep -v grep | grep tnslsnr'
+alias ob='cd $ORACLE_BASE'
+alias oh='cd $ORACLE_HOME'
+alias op='cd $ORACLE_HOME/OPatch'
+alias os='cd /u01/app/stage'
+alias oa='cd $ORACLE_HOME/apex'
+alias od='cd $ORACLE_BASE/product/12.1.0/ords'
+alias ordsl='tail -f $ORACLE_BASE/product/12.1.0/ords/ords.log'
+alias ordslv='vi + $ORACLE_BASE/product/12.1.0/ords/ords.log'
+alias ol='lsnrctl status'
