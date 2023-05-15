@@ -239,3 +239,90 @@ if "%HELP%" == "Y" (%_help% %_script%.txt && %_ex%)
 ENDLOCAL
 
 
+@echo off
+set _SCRIPT=%~n0
+set _SCRIPTDIR=%~dp0
+set _LOG_FILE=%_SCRIPT%.log
+set _HELP_FILE=%_SCRIPT%.txt
+set _MACROS=%_SCRIPT%macros.cmd
+set _FUNCTIONS=%_SCRIPT%functions.cmd
+@REM calling functions
+call %_FUNCTIONS%
+@REM calling macros
+call %_MACROS%
+@echo Params %*
+if "[%*]"=="[]" goto :usage
+goto continue
+:usage
+@echo.
+%_usage%&goto:eof
+
+@REM continue
+:continue
+
+@REM setting defaults
+set _DISPLAY_HELP=N
+set _MAKE=N
+set _MAKE_PROJECT=N
+set _MAKE_FILE=N
+@REM call arg parser
+call :parse_args %*
+@echo _DISPLAY_HELP=%_DISPLAY_HELP%
+@echo _MAKE=%_MAKE%
+@echo _MAKE_PROJECT=%_MAKE_PROJECT%
+@echo _MAKE_FILE=%_MAKE_FILE%
+
+if %_DISPLAY_HELP% == Y %_help%|more && goto:eof
+%_log_info%: Starting %_SCRIPT%
+
+%_log_info%: Done %_SCRIPT%
+
+goto:eof
+@REM subroutine parse args
+:parse_args
+if "%1" == "-h" set _DISPLAY_HELP=Y
+if "%1" == "help" set _DISPLAY_HELP=Y
+if "%1" == "-m" set _MAKE=Y
+if "%1" == "make" set _MAKE=Y
+if "%1" == "project" set _MAKE_PROJECT=Y
+if "%1" == "file" set _MAKE_FILE=Y
+shift
+if "[%1]"=="[]" goto:eof
+goto:parse_args
+
+::exit /b
+%_ex%
+
+
+mac
+@echo off
+@REM Testfunctions
+
+@REM utility functions
+:make_help
+ @echo.>%_HELP_FILE%
+ @echo Help for "%_SCRIPT%">>%_HELP_FILE%
+ @echo. >>%_HELP_FILE%
+ @echo more to follow...>>%_HELP_FILE%
+:make_folder
+if not "%~1" == "" md %~1
+
+
+@echo off
+
+@REM Testmacros
+
+if not exist %_HELP_FILE% call :make_help
+@REM Variables and Macros
+:set_macros
+set _ex=exit /b
+set _date=
+for /f "tokens=2 delims= " %%a in ('@echo %DATE%') do (@echo %%a && set _date=%%a)
+set _time=%TIME%
+set _m=@echo %_date% %_time%%~1
+set _log_info=%_m%    [INFO]
+set _log_error=%_m%  [ERROR]
+set _help=more %_HELP_FILE%
+set _usage=@echo Usage %_SCRIPT% (options) [params]
+goto:eof
+
