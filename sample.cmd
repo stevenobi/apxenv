@@ -326,3 +326,178 @@ set _help=more %_HELP_FILE%
 set _usage=@echo Usage %_SCRIPT% (options) [params]
 goto:eof
 
+@REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@echo off
+setlocal enableextensions
+@REM script variables
+set _SCRIPT=%~n0
+set _SCRIPTNAME=%0
+set _SCRIPTDIR=%~dp0
+set _LOGDIR=%_SCRIPTDIR%log
+set _LOG_FILE=%_LOGDIR%\%_SCRIPT%.log
+set _HELP_FILE=%_SCRIPT%.txt
+set _UTILS=%_SCRIPT%utl.cmd
+set _MACROS=%_SCRIPT%mac.cmd
+set _FUNCTIONS=%_SCRIPT%fnc.cmd
+@REM changing into script dir
+pushd %_SCRIPTDIR%
+@REM calling functions (=subroutines) in separate call at bottom of script
+:: %_FUNCTIONS%
+@REM calling macros
+call %_MACROS%
+@REM @REM calling utilities
+call %_UTILS%
+@REM @echo Params "%*"
+@REM first parameter present?
+if "[%*]"=="[]" call :_usage & exit /b
+
+@REM Log Dir
+if not exist "%_LOGDIR%" call :_make_folder "%_LOGDIR%"
+
+@REM Help File
+if not exist "%_HELP_FILE%" call :_make_help
+
+@REM call arg parser
+call :parse_args %*
+
+@REM --- process results
+@REM help
+if "%_DISPLAY_HELP%" == "Y" call :_help && goto:eof
+
+@REM --- continue, if all mandatory parameter are set
+if not "%_MAKE%" == "" set _CONTINUE=Y
+if not "%_SET_PROJECT%" == ""  set _CONTINUE=Y
+if not "%_DEBUG%"=="TRUE"  set _CONTINUE=Y
+if not "%_DISPLAY_HELP%"=="Y"  set _CONTINUE=Y
+if "%_CONTINUE%" == "Y" goto:continue
+@REM show usage and possible error
+call :_usage
+@echo.
+%_log_error% Parameter Invalid: "%*"
+exit /b
+@REM all good so far, and...
+:continue
+@REM debug call
+if "%_DEBUG%" == "TRUE" (
+    %_log_debug% Run Variables: _DEBUG=%_DEBUG%, _DISPLAY_HELP=%_DISPLAY_HELP%, _MAKE=%_MAKE%, _MAKE_PROJECT=%_MAKE_PROJECT%, _MAKE_FILE=%_MAKE_FILE%.
+)
+@REM
+@REM ---------------------------------------------------------------------
+%_log_info% Starting %_SCRIPT%
+%_log_info% ----- Processing
+%_log_info% Done %_SCRIPT%
+@REM ---------------------------------------------------------------------
+@REM
+@REM Skip all SUB ROUTINES
+goto:eof
+
+@REM ================ SUB ROUTINES ================
+
+@REM Parse Args (kept here, since script specific)
+:parse_args
+if "%1" == "-d"      set _DEBUG=TRUE
+if "%1" == "debug"   set _DEBUG=TRUE
+if "%1" == "-h"      set _DISPLAY_HELP=Y
+if "%1" == "/?"      set _DISPLAY_HELP=Y
+if "%1" == "help"    set _DISPLAY_HELP=Y
+if "%1" == "-m"      set _MAKE=Y
+if "%1" == "make"    set _MAKE=Y
+if "%1" == "-p"      set _MAKE_PROJECT=Y
+if "%1" == "project" set _MAKE_PROJECT=Y
+if "%1" == "file"    set _MAKE_FILE=Y && shift && set _MAKE_FILE_NAME=%1 && shift
+if "%1" == "folder"  set _MAKE_FOLDER=Y
+if "%1" == "-sp"     set _SET_PROJECT=Y
+if "%1" == "set_project"     set _SET_PROJECT=Y
+shift
+if "[%1]"=="[]" goto:eof
+goto:parse_args
+
+
+@REM Subroutine Calls in %_FUNCTIONS% File
+:_usage
+    %_FUNCTIONS% %_SCRIPT%
+:_debug_call
+    %_FUNCTIONS% %1
+:_make_help
+    %_FUNCTIONS% %_HELP_FILE%
+:_make_folder
+    %_FUNCTIONS% %_LOGDIR%
+:_help
+    %_FUNCTIONS% %_HELP_FILE%
+goto:eof
+@REM get back...
+popd
+endlocal
+@REM exit /b
+%_ex% %ERRORLEVEL%
+
+
+@REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+@echo off
+setlocal enableextensions
+@REM Not to be directly called
+exit /b 9009
+
+@REM ---------------------------------------------------------------------
+@REM Utilities
+
+@REM %_ex%
+
+@REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@echo off
+setlocal enableextensions
+@REM Not to be directly called
+exit /b 9009
+
+@REM ---------------------------------------------------------------------
+@REM Functions
+
+:_usage
+    @echo.
+    @echo.Usage: %~1 (options) [params]. Type %~1 -h for more information.
+    goto:eof
+
+:_help
+    more %~1
+    goto:eof
+
+:_debug_call
+    %_log_debug% %~1
+    goto:eof
+
+:_make_help
+    @echo.>%_HELP_FILE%
+    @echo.         Help for "%_SCRIPT%">>%_HELP_FILE%
+    @echo.>>%_HELP_FILE%
+    @echo  more help will follow...>>%_HELP_FILE%
+    goto:eof
+
+:_make_folder
+    if not "%~1" == "" (
+        %_log_info% Making Directory %~1
+        md %~1>nul
+    )
+
+@REM exit Functions
+%_ex%
+
+@REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+@echo off
+@REM Macros and Variables
+set _ex=exit /b
+set _date=
+for /f "tokens=1* delims= " %%a in ('@echo %DATE%') do (set _date=%%a)
+set _time=
+:: %TIME%
+for /f "tokens=1 delims=," %%b in ('@echo %TIME%') do (set _time=%%b)
+@REM Messages
+set _m=@echo %_date% %_time%%~1
+set _log_info=%_m%----[INFO]:
+set _log_error=%_m%---[ERROR]:
+set _log_warn=%_m%-[WARNING]:
+set _log_debug=%_m%---[DEBUG]:
+@REM Exit Macros
+%_ex%
+
