@@ -327,8 +327,12 @@ set _usage=@echo Usage %_SCRIPT% (options) [params]
 goto:eof
 
 @REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@REM OAD Framework
+
+@REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @echo off
 setlocal enableextensions
+@REM =====================================================================
 @REM script variables
 set _SCRIPT=%~n0
 set _SCRIPTNAME=%0
@@ -338,52 +342,48 @@ set _LOG_FILE=%_LOGDIR%\%_SCRIPT%.log
 set _HELP_FILE=%_SCRIPT%.txt
 set _UTILS=%_SCRIPT%utl.cmd
 set _MACROS=%_SCRIPT%mac.cmd
+set _DEFAULTS=%_SCRIPT%def.cmd
 set _FUNCTIONS=%_SCRIPT%fnc.cmd
-@REM changing into script dir
-pushd %_SCRIPTDIR%
-@REM calling functions (=subroutines) in separate call at bottom of script
-:: %_FUNCTIONS%
+@REM =====================================================================
 @REM calling macros
 call %_MACROS%
-@REM @REM calling utilities
-call %_UTILS%
+@REM calling function and utilities on demand (see bottom of script)
+@REM
+@REM calling defaults
+call %_DEFAULTS%
+@REM =====================================================================
 @REM @echo Params "%*"
-@REM first parameter present?
+@REM =====================================================================
+@REM check mandatory parameter
 if "[%*]"=="[]" call :_usage & exit /b
-
 @REM Log Dir
 if not exist "%_LOGDIR%" call :_make_folder "%_LOGDIR%"
-
 @REM Help File
 if not exist "%_HELP_FILE%" call :_make_help
-
+@REM =====================================================================
 @REM call arg parser
 call :parse_args %*
-
+@REM =====================================================================
 @REM --- process results
 @REM help
 if "%_DISPLAY_HELP%" == "Y" call :_help && goto:eof
 
-@REM --- continue, if all mandatory parameter are set
-if not "%_MAKE%" == "" set _CONTINUE=Y
-if not "%_SET_PROJECT%" == ""  set _CONTINUE=Y
-if not "%_DEBUG%"=="TRUE"  set _CONTINUE=Y
-if not "%_DISPLAY_HELP%"=="Y"  set _CONTINUE=Y
-if "%_CONTINUE%" == "Y" goto:continue
-@REM show usage and possible error
-call :_usage
-@echo.
-%_log_error% Parameter Invalid: "%*"
-exit /b
-@REM all good so far, and...
+@REM all good so far, so...
 :continue
-@REM debug call
-if "%_DEBUG%" == "TRUE" (
-    %_log_debug% Run Variables: _DEBUG=%_DEBUG%, _DISPLAY_HELP=%_DISPLAY_HELP%, _MAKE=%_MAKE%, _MAKE_PROJECT=%_MAKE_PROJECT%, _MAKE_FILE=%_MAKE_FILE%.
-)
 @REM
+
 @REM ---------------------------------------------------------------------
 %_log_info% Starting %_SCRIPT%
+@REM debug call
+if "%_DEBUG%" == "TRUE" (
+    %_log_debug% Run Variables^[1^]: _DEBUG="%_DEBUG%", _DISPLAY_HELP="%_DISPLAY_HELP%",
+    %_log_debug% Run Variables^[2^]: _SET_PROJECT="%_SET_PROJECT%", _SET_PROJECT_NAME="%_SET_PROJECT_NAME%",
+    %_log_debug% Run Variables^[3^]: _KEEP_FILES="%_KEEP_FILES%", _CREATE_FOLDER_IF_NOT_EXISTS="%_CREATE_FOLDER_IF_NOT_EXISTS%",
+    %_log_debug% Run Variables^[4^]: _MAKE="%_MAKE%", _MAKE_PROJECT="%_MAKE_PROJECT%", _MAKE_PROJECT_NAME="%_MAKE_PROJECT_NAME%",
+    %_log_debug% Run Variables^[5^]: _MAKE_FILE="%_MAKE_FILE%", _MAKE_FILE_NAME="%_MAKE_FILE_NAME%",
+    %_log_debug% Run Variables^[6^]: _MAKE_FOLDER="%_MAKE_FOLDER%", _MAKE_FOLDER_NAME="%_MAKE_FOLDER_NAME%".
+)
+
 %_log_info% ----- Processing
 %_log_info% Done %_SCRIPT%
 @REM ---------------------------------------------------------------------
@@ -395,37 +395,53 @@ goto:eof
 
 @REM Parse Args (kept here, since script specific)
 :parse_args
-if "%1" == "-d"      set _DEBUG=TRUE
-if "%1" == "debug"   set _DEBUG=TRUE
-if "%1" == "-h"      set _DISPLAY_HELP=Y
-if "%1" == "/?"      set _DISPLAY_HELP=Y
-if "%1" == "help"    set _DISPLAY_HELP=Y
-if "%1" == "-m"      set _MAKE=Y
-if "%1" == "make"    set _MAKE=Y
-if "%1" == "-p"      set _MAKE_PROJECT=Y
-if "%1" == "project" set _MAKE_PROJECT=Y
-if "%1" == "file"    set _MAKE_FILE=Y && shift && set _MAKE_FILE_NAME=%1 && shift
-if "%1" == "folder"  set _MAKE_FOLDER=Y
-if "%1" == "-sp"     set _SET_PROJECT=Y
-if "%1" == "set_project"     set _SET_PROJECT=Y
+@REM help
+if "%1" == "-h"              set "_DISPLAY_HELP=Y" && goto:eof
+if "%1" == "-?"              set "_DISPLAY_HELP=Y" && goto:eof
+if "%1" == "help"            set "_DISPLAY_HELP=Y" && goto:eof
+@REM debug
+if "%1" == "-d"              set _DEBUG=TRUE
+if "%1" == "debug"           set _DEBUG=TRUE
+@REM set options (if mutually exclusive - goto:eof)
+if "%1" == "-sp"             set "_SET_PROJECT=Y"  && set "_SET_PROJECT_NAME=%~2"
+if "%1" == "set-project"     set "_SET_PROJECT=Y"  && set "_SET_PROJECT_NAME=%~2"
+
+if "%1" == "-k"              set "_KEEP_FILES=Y"   && set "_KEEP_FILES_METHOD=%~2"
+if "%1" == "-cf"             set "_CREATE_FOLDER_IF_NOT_EXISTS=Y"
+@REM param1 MAKE
+if "%1" == "-m"              set "_MAKE=Y"
+if "%1" == "make"            set "_MAKE=Y"
+@REM param1 MAKE arguments
+if "%1" == "-project"        set "_MAKE_PROJECT=Y" && set "_MAKE_PROJECT_NAME=%~2"
+if "%1" == "-folder"         set "_MAKE_FOLDER=Y"  && set "_MAKE_FOLDER_NAME=%~2"
+if "%1" == "-file"           set "_MAKE_FILE=Y"    && set "_MAKE_FILE_NAME=%~2"
+@REM param2 ""
+@REM param2 "" arguments
+
+@REM EO Parse Args
 shift
 if "[%1]"=="[]" goto:eof
 goto:parse_args
 
-
-@REM Subroutine Calls in %_FUNCTIONS% File
+@REM =====================================================================
+@REM Subroutine Calls in %_FUNCTIONS% and %_UTILS% File
+@REM
+@REM functions
 :_usage
     %_FUNCTIONS% %_SCRIPT%
 :_debug_call
     %_FUNCTIONS% %1
-:_make_help
-    %_FUNCTIONS% %_HELP_FILE%
-:_make_folder
-    %_FUNCTIONS% %_LOGDIR%
 :_help
     %_FUNCTIONS% %_HELP_FILE%
+@REM utilities
+:_make_help
+    %_UTILS% %_HELP_FILE%
+:_make_folder
+    %_UTILS% %_LOGDIR%
 goto:eof
-@REM get back...
+
+@REM reset...
+:EOF
 popd
 endlocal
 @REM exit /b
@@ -433,18 +449,21 @@ endlocal
 
 
 @REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-
+@REM def
 @echo off
-setlocal enableextensions
-@REM Not to be directly called
-exit /b 9009
 
+@REM Script Defaults
 @REM ---------------------------------------------------------------------
-@REM Utilities
+@REM Variables
+set "_DEFAULT_KEEP_FILES=ARCHIVE"
+set "_DEFAULT_CREATE_FOLDER_IF_NOT_EXISTS=TRUE"
 
-@REM %_ex%
+@REM exit Variables
+%_ex%
+
 
 @REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@REM fnc
 @echo off
 setlocal enableextensions
 @REM Not to be directly called
@@ -466,24 +485,12 @@ exit /b 9009
     %_log_debug% %~1
     goto:eof
 
-:_make_help
-    @echo.>%_HELP_FILE%
-    @echo.         Help for "%_SCRIPT%">>%_HELP_FILE%
-    @echo.>>%_HELP_FILE%
-    @echo  more help will follow...>>%_HELP_FILE%
-    goto:eof
-
-:_make_folder
-    if not "%~1" == "" (
-        %_log_info% Making Directory %~1
-        md %~1>nul
-    )
-
 @REM exit Functions
 %_ex%
 
-@REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
+@REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@REM mac
 @echo off
 @REM Macros and Variables
 set _ex=exit /b
@@ -500,4 +507,35 @@ set _log_warn=%_m%-[WARNING]:
 set _log_debug=%_m%---[DEBUG]:
 @REM Exit Macros
 %_ex%
+
+
+@REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@REM utl
+
+@echo off
+setlocal enableextensions
+@REM Not to be directly called
+exit /b 9009
+
+@REM ---------------------------------------------------------------------
+@REM Utilities
+
+:_make_help
+    @echo.>%_HELP_FILE%
+    @echo.         Help for "%_SCRIPT%">>%_HELP_FILE%
+    @echo.>>%_HELP_FILE%
+    @echo  more help will follow...>>%_HELP_FILE%
+    goto:eof
+
+:_make_folder
+    if not "%~1" == "" (
+        %_log_info% Making Directory %~1
+        md %~1>nul
+    )
+
+%_ex%
+
+@REM EOF
+
+
 
