@@ -625,6 +625,31 @@ if "%_DISPLAY_HELP%" == "Y" call :_help && goto:eof
 @REM =====================================================================
 @REM set options and defaults
 
+@REM and if set, how to process?
+if "%_KEEP_FILES%" == "Y" (
+@REM echo "%_KEEP_FILES_METHOD%."
+    if not "%_KEEP_FILES_METHOD%." == "." (
+        set _METHOD_FOUND=N
+        for %%g in (%_KEEP_FILE_METHODS%) do (
+            if "%_KEEP_FILES_METHOD%" == "%%g" set "_KEEP_FILES_METHOD=%%g" && set "_METHOD_FOUND=Y"
+            if "%_KEEP_FILES_METHOD%" == "NONE" set "_KEEP_FILES=N"
+            if "%_KEEP_FILES_METHOD%" == "N" set "_KEEP_FILES=N"
+        )
+        if not "!_METHOD_FOUND!" == "Y" (
+            set "_KEEP_FILES_METHOD=%_DEFAULT_KEEP_FILES_METHOD%"
+            %_log_warn% Unknown Keep File Method: %_KEEP_FILES_METHOD%.
+            %_log_warn% Falling back to default method: %_DEFAULT_KEEP_FILES_METHOD%.
+            %_log_warn% %_line%
+            )
+    ) else (
+        set _KEEP_FILES_METHOD=%_DEFAULT_KEEP_FILES_METHOD:"=%
+    )
+)
+if "%_KEEP_FILES%" == "N" (
+    set "_KEEP_FILES_METHOD=NONE"
+)
+
+
 @REM =====================================================================
 @REM set project
 if "%_SET_PROJECT%" == "Y" call :_set_project "%_PROJECT_ROOT:"=%" "%_SET_PROJECT_NAME%"
@@ -793,6 +818,5 @@ popd
 endlocal
 @REM exit /b ERRORLEVEL
 %_ex% %ERRORLEVEL%
-
 
 
