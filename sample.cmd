@@ -459,7 +459,8 @@ set NOTFOUND=
 
 :_set-log-level
    setlocal enabledelayedexpansion
-   call set "_LOG_SEVERITY=!LogSeverities[%~1]!" & endlocal
+   set "_LS=!LogSeverities[%~1]!"
+   endlocal & set "_LOG_SEVERITY=%_LS%"
    goto:eof
 
 
