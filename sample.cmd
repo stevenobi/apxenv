@@ -90,455 +90,6 @@
 @REM
 @REM ---------------------------------------------------------------------
 @REM Setting script variables
-set _CURDIR=@echo %~dp0
-set _SCRIPT=@echo %~n0
-set _LOGDIR=%_CURDIR%\log
-set _LOG_FILE=%_LOGDIR%\%_SCRIPT%.log
-set _HELP_FILE=%_CURDIR%\%_SCRIPT%.txt
-@REM calling macros file
-call OADMAC.bat %_LOG_FILE% %_HELP_FILE%
-@REM ---------------------------------------------------------------------
-@REM contents of OADMAC.bat:
-@REM
-@echo off
-@REM check if needed or if accessible already
-set _LOGFILE="%1"
-set _HELPFILE="%2"
-@REM cls
-@REM setlocal DisableDelayedExpansion
-@REM ---------------------------------------------------------------------
-@REM Macro Functions
-
-@REM -- Date Time Functions
-@REM Date
-set _date=for /F "tokens=2" %%i in ('date /t') do @echo %%i
-@REM Time
-set _time=@echo %time%
-@REM DateTime
-set DT=@echo %_date% %_time%
-
-@REM -- Runtime Functions
-@REM a macro to run exit /b (ERRORLEVEL optional)
-@REM You can then exit a subroutine with: %_ex% (ERRORLEVEL)
-set _ex=exit /b %~1
-
-@REM -- Status Values
-set _ok=0
-set _nok=1
-set _warn=2
-set _err=%_nok%
-set _ex_ok=%_ex% %_ok%
-set _ex_error=%_ex% %_err%
-set _ex_warning=%_ex% %_warn%
-
-@REM -- Log and Error Functions
-@REM Console Logging to console only (call %_log% Message)
-set _log_console=@echo %~1
-@REM Logging (call %_log% Message File)
-set _log_file=@echo %~1>>%2
-@REM Console Logging to console and file (call %_log% Message File)
-set _log_file_console=@echo %~1| tee -a %2
-
-@REM Logger Shortcuts
-set _logc=%_log_console% %~1 %_LOGFILE%
-set _logf=%_log_file% %~1 %_LOGFILE%
-set _logfc=%_log_file_console% %~1 %_LOGFILE%
-@REM using log_file_console as default
-set _log=%_logfc% %*
-
-@REM @REM Default Logger???
-@REM set _DEFAULT_LOGGER=%_log_console% %~1 %_LOGFILE%
-@REM @REM using variable here???
-@REM if %_LOGGER% == console      (set _DEFAULT_LOGGER=%_logc% %*)
-@REM if %_LOGGER% == file         (set _DEFAULT_LOGGER=%_logf% %*)
-@REM if %_LOGGER% == console_file (set _DEFAULT_LOGGER=%_logfc% %*)
-@REM set _log=%_DEFAULT_LOGGER% %*
-
-@REM Message (call: %_message% [Severity] [Message] [Errorlevel])
-set _message=@echo %DT% %~1 [%~3]: %~2
-@REM
-@REM Error (call: %_error_msg% Message Errorlevel)
-set _error_msg=%_message% "* ERROR:" %~1 %_err%
-@REM Warning (call %_warning_msg% Message Errorlevel)
-set _warning_msg=%_message% "WARNING:" %~1 %_warn%
-@REM Success (call %_success_msg% Message Errorlevel)
-set _success_msg=%_message% " SUCESS:" %~1 %_ok%
-@REM Info (call %_info_msg% Message Errorlevel)
-set _info_msg=%_message% "   INFO:" %~1 %_ok%
-
-@REM Error (call: %_log_error% [Message] ([Logfile]))
-set _log_error=set _MSG=%_error_msg% %~1 && %_log% %_MSG%
-@REM Warning (call: %_log_warning% [Message] ([Logfile]))
-set _log_warning=set _MSG=%_warning_msg% %~1 && %_log% %_MSG%
-@REM Success (call: %_log_success% [Message] ([Logfile]))
-set _log_success=set _MSG=%_success_msg% %~1 && %_log% %_MSG%
-@REM Info (call: %_log_info% [Message] ([Logfile]))
-set _log_info=set _MSG=%_info_msg% %~1 && %_log% %_MSG%
-
-@REM :: Examples
-::set MSG=%_error_msg% Failed to load file. && %_log% %MSG%
-:: or
-:: %_error_msg% Failed to load file. | %_log% %~1
-:: or
-::%_log_error% Failed to load file.
-::
-
-@REM Standard Checks and Returns
-@REM
-@REM Check If a file exists, else exit error
-set _check_file=if not exist %~1 (
-    %_log_error% File or Directory %~n1 not found^^!
-    %_ex_error%) else (%_ex_ok%)
-@REM Check if folder exists (wrapper to _check_file)
-set _check_folder=%_check_file% %*
-
-@REM :: Examples
-:: set _JAVA=C:\%ProgramFiles%\Java\180.05\bin\java.exe
-:: if %_check_file% %_JAVA% NEQ 0 %_ex_error%
-::
-
-@REM -- Help Functions
-@REM Usage text and exit
-set _usage=@echo Usage: %~1 & %_ex_warn%
-@REM Help Text
-set _help=type (%_HELPFILE%) | more & %_ex_warn%
-
-@REM -- File Functions
-@REM Codepage for current session
-set _set_codepage=chcp %~1>nul
-
-::EOF
-
-
-@REM ---------------------------------------------------------------------
-@REM calling environment file
-call OADENV.bat
-@REM contents of OADENV.bat
-@echo off
-set _PROJECT_ROOT=C:\User\Me\Projects
-set _PROJECT=
-@REM calls Encoding.bat, that contains set _ENCODING=.AL32UTF8
-call OADENC.bat && set NLS_LANG=%_ENCODING%
-@REM calls Codepage.bat, that contains set _CODEPAGE=65001
-call OADCPG.bat && %_set_codepage% %_CODEPAGE%
-::EOF
-
-@REM ---------------------------------------------------------------------
-@REM Main
-@REM
-@REM -- Prepare the Command Processor --
-SETLOCAL ENABLEEXTENSIONS
-SETLOCAL ENABLEDELAYEDEXPANSION
-@REM ---------------------------------------------------------------------
-if [%1]==[] (%_usage% "%_SCRIPT% <option> [PROJECT]" && %_ex%)
-if [%1]==[-h] set "HELP=Y"
-if [%1]==[help] set "HELP=Y"
-if "%HELP%" == "Y" (%_help% %_script%.txt && %_ex%)
-
-
-ENDLOCAL
-
-
-@echo off
-set _SCRIPT=%~n0
-set _SCRIPTDIR=%~dp0
-set _LOG_FILE=%_SCRIPT%.log
-set _HELP_FILE=%_SCRIPT%.txt
-set _MACROS=%_SCRIPT%macros.cmd
-set _FUNCTIONS=%_SCRIPT%functions.cmd
-@REM calling functions
-call %_FUNCTIONS%
-@REM calling macros
-call %_MACROS%
-@echo Params %*
-if "[%*]"=="[]" goto :usage
-goto continue
-:usage
-@echo.
-%_usage%&goto:eof
-
-@REM continue
-:continue
-
-@REM setting defaults
-set _DISPLAY_HELP=N
-set _MAKE=N
-set _MAKE_PROJECT=N
-set _MAKE_FILE=N
-@REM call arg parser
-call :parse_args %*
-@echo _DISPLAY_HELP=%_DISPLAY_HELP%
-@echo _MAKE=%_MAKE%
-@echo _MAKE_PROJECT=%_MAKE_PROJECT%
-@echo _MAKE_FILE=%_MAKE_FILE%
-
-if %_DISPLAY_HELP% == Y %_help%|more && goto:eof
-%_log_info%: Starting %_SCRIPT%
-
-%_log_info%: Done %_SCRIPT%
-
-goto:eof
-@REM subroutine parse args
-:parse_args
-if "%1" == "-h" set _DISPLAY_HELP=Y
-if "%1" == "help" set _DISPLAY_HELP=Y
-if "%1" == "-m" set _MAKE=Y
-if "%1" == "make" set _MAKE=Y
-if "%1" == "project" set _MAKE_PROJECT=Y
-if "%1" == "file" set _MAKE_FILE=Y
-shift
-if "[%1]"=="[]" goto:eof
-goto:parse_args
-
-::exit /b
-%_ex%
-
-
-mac
-@echo off
-@REM Testfunctions
-
-@REM utility functions
-:make_help
- @echo.>%_HELP_FILE%
- @echo Help for "%_SCRIPT%">>%_HELP_FILE%
- @echo. >>%_HELP_FILE%
- @echo more to follow...>>%_HELP_FILE%
-:make_folder
-if not "%~1" == "" md %~1
-
-
-@echo off
-
-@REM Testmacros
-
-if not exist %_HELP_FILE% call :make_help
-@REM Variables and Macros
-:set_macros
-set _ex=exit /b
-set _date=
-for /f "tokens=2 delims= " %%a in ('@echo %DATE%') do (@echo %%a && set _date=%%a)
-set _time=%TIME%
-set _m=@echo %_date% %_time%%~1
-set _log_info=%_m%    [INFO]
-set _log_error=%_m%  [ERROR]
-set _help=more %_HELP_FILE%
-set _usage=@echo Usage %_SCRIPT% (options) [params]
-goto:eof
-
-@REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@REM OAD Framework
-
-@REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@echo off
-setlocal enableextensions
-@REM =====================================================================
-@REM script variables
-set _SCRIPT=%~n0
-set _SCRIPTNAME=%0
-set _SCRIPTDIR=%~dp0
-set _LOGDIR=%_SCRIPTDIR%log
-set _LOG_FILE=%_LOGDIR%\%_SCRIPT%.log
-set _HELP_FILE=%_SCRIPT%.txt
-set _UTILS=%_SCRIPT%utl.cmd
-set _MACROS=%_SCRIPT%mac.cmd
-set _DEFAULTS=%_SCRIPT%def.cmd
-set _FUNCTIONS=%_SCRIPT%fnc.cmd
-@REM =====================================================================
-@REM calling macros
-call %_MACROS%
-@REM calling function and utilities on demand (see bottom of script)
-@REM
-@REM calling defaults
-call %_DEFAULTS%
-@REM =====================================================================
-@REM @echo Params "%*"
-@REM =====================================================================
-@REM check mandatory parameter
-if "[%*]"=="[]" call :_usage & exit /b
-@REM Log Dir
-if not exist "%_LOGDIR%" call :_make_folder "%_LOGDIR%"
-@REM Help File
-if not exist "%_HELP_FILE%" call :_make_help
-@REM =====================================================================
-@REM call arg parser
-call :parse_args %*
-@REM =====================================================================
-@REM --- process results
-@REM help
-if "%_DISPLAY_HELP%" == "Y" call :_help && goto:eof
-
-@REM all good so far, so...
-:continue
-@REM
-
-@REM ---------------------------------------------------------------------
-%_log_info% Starting %_SCRIPT%
-@REM debug call
-if "%_DEBUG%" == "TRUE" (
-    %_log_debug% Run Variables^[1^]: _DEBUG="%_DEBUG%", _DISPLAY_HELP="%_DISPLAY_HELP%",
-    %_log_debug% Run Variables^[2^]: _SET_PROJECT="%_SET_PROJECT%", _SET_PROJECT_NAME="%_SET_PROJECT_NAME%",
-    %_log_debug% Run Variables^[3^]: _KEEP_FILES="%_KEEP_FILES%", _CREATE_FOLDER_IF_NOT_EXISTS="%_CREATE_FOLDER_IF_NOT_EXISTS%",
-    %_log_debug% Run Variables^[4^]: _MAKE="%_MAKE%", _MAKE_PROJECT="%_MAKE_PROJECT%", _MAKE_PROJECT_NAME="%_MAKE_PROJECT_NAME%",
-    %_log_debug% Run Variables^[5^]: _MAKE_FILE="%_MAKE_FILE%", _MAKE_FILE_NAME="%_MAKE_FILE_NAME%",
-    %_log_debug% Run Variables^[6^]: _MAKE_FOLDER="%_MAKE_FOLDER%", _MAKE_FOLDER_NAME="%_MAKE_FOLDER_NAME%".
-)
-
-%_log_info% ----- Processing
-%_log_info% Done %_SCRIPT%
-@REM ---------------------------------------------------------------------
-@REM
-@REM Skip all SUB ROUTINES
-goto:eof
-
-@REM ================ SUB ROUTINES ================
-
-@REM Parse Args (kept here, since script specific)
-:parse_args
-@REM help
-if "%1" == "-h"              set "_DISPLAY_HELP=Y" && goto:eof
-if "%1" == "-?"              set "_DISPLAY_HELP=Y" && goto:eof
-if "%1" == "help"            set "_DISPLAY_HELP=Y" && goto:eof
-@REM debug
-if "%1" == "-d"              set _DEBUG=TRUE
-if "%1" == "debug"           set _DEBUG=TRUE
-@REM set options (if mutually exclusive - goto:eof)
-if "%1" == "-sp"             set "_SET_PROJECT=Y"  && set "_SET_PROJECT_NAME=%~2"
-if "%1" == "set-project"     set "_SET_PROJECT=Y"  && set "_SET_PROJECT_NAME=%~2"
-
-if "%1" == "-k"              set "_KEEP_FILES=Y"   && set "_KEEP_FILES_METHOD=%~2"
-if "%1" == "-cf"             set "_CREATE_FOLDER_IF_NOT_EXISTS=Y"
-@REM param1 MAKE
-if "%1" == "-m"              set "_MAKE=Y"
-if "%1" == "make"            set "_MAKE=Y"
-@REM param1 MAKE arguments
-if "%1" == "-project"        set "_MAKE_PROJECT=Y" && set "_MAKE_PROJECT_NAME=%~2"
-if "%1" == "-folder"         set "_MAKE_FOLDER=Y"  && set "_MAKE_FOLDER_NAME=%~2"
-if "%1" == "-file"           set "_MAKE_FILE=Y"    && set "_MAKE_FILE_NAME=%~2"
-@REM param2 ""
-@REM param2 "" arguments
-
-@REM EO Parse Args
-shift
-if "[%1]"=="[]" goto:eof
-goto:parse_args
-
-@REM =====================================================================
-@REM Subroutine Calls in %_FUNCTIONS% and %_UTILS% File
-@REM
-@REM functions
-:_usage
-    %_FUNCTIONS% %_SCRIPT%
-:_debug_call
-    %_FUNCTIONS% %1
-:_help
-    %_FUNCTIONS% %_HELP_FILE%
-@REM utilities
-:_make_help
-    %_UTILS% %_HELP_FILE%
-:_make_folder
-    %_UTILS% %_LOGDIR%
-goto:eof
-
-@REM reset...
-:EOF
-popd
-endlocal
-@REM exit /b
-%_ex% %ERRORLEVEL%
-
-
-@REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@REM def
-@echo off
-
-@REM Script Defaults
-@REM ---------------------------------------------------------------------
-@REM Variables
-set "_DEFAULT_KEEP_FILES=ARCHIVE"
-set "_DEFAULT_CREATE_FOLDER_IF_NOT_EXISTS=TRUE"
-
-@REM exit Variables
-%_ex%
-
-
-@REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@REM fnc
-@echo off
-setlocal enableextensions
-@REM Not to be directly called
-exit /b 9009
-
-@REM ---------------------------------------------------------------------
-@REM Functions
-
-:_usage
-    @echo.
-    @echo.Usage: %~1 (options) [params]. Type %~1 -h for more information.
-    goto:eof
-
-:_help
-    more %~1
-    goto:eof
-
-:_debug_call
-    %_log_debug% %~1
-    goto:eof
-
-@REM exit Functions
-%_ex%
-
-
-@REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@REM mac
-@echo off
-@REM Macros and Variables
-set _ex=exit /b
-set _date=
-for /f "tokens=1* delims= " %%a in ('@echo %DATE%') do (set _date=%%a)
-set _time=
-:: %TIME%
-for /f "tokens=1 delims=," %%b in ('@echo %TIME%') do (set _time=%%b)
-@REM Messages
-set _m=@echo %_date% %_time%%~1
-set _log_info=%_m%----[INFO]:
-set _log_error=%_m%---[ERROR]:
-set _log_warn=%_m%-[WARNING]:
-set _log_debug=%_m%---[DEBUG]:
-@REM Exit Macros
-%_ex%
-
-
-@REM @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@REM utl
-
-@echo off
-setlocal enableextensions
-@REM Not to be directly called
-exit /b 9009
-
-@REM ---------------------------------------------------------------------
-@REM Utilities
-
-:_make_help
-    @echo.>%_HELP_FILE%
-    @echo.         Help for "%_SCRIPT%">>%_HELP_FILE%
-    @echo.>>%_HELP_FILE%
-    @echo  more help will follow...>>%_HELP_FILE%
-    goto:eof
-
-:_make_folder
-    if not "%~1" == "" (
-        %_log_info% Making Directory %~1
-        md %~1>nul
-    )
-
-%_ex%
-
-@REM EOF
-
-
-
 @echo off
 setlocal enableextensions
 @REM =====================================================================
@@ -550,10 +101,10 @@ set _SCRIPTNAME=%0
 @REM =====================================================================
 @REM check mandatory parameter
 if "[%*]"=="[]" (
-    @echo. & @echo Usage: %_SCRIPT% ^(options^) ^[params^]
-    @echo Type %_SCRIPT% -h for more information.
-    endlocal
-    exit /b)
+   @echo. & @echo Usage: %_SCRIPT% ^(options^) ^[params^]
+   @echo Type %_SCRIPT% -h for more information.
+   endlocal
+   exit /b)
 
 @REM =====================================================================
 @REM script variables
@@ -567,46 +118,58 @@ set _MACROS=%_SCRIPTDIR%%_SCRIPT%mac.cmd
 set _DEFAULTS=%_SCRIPTDIR%%_SCRIPT%def.cmd
 set _FUNCTIONS=%_SCRIPTDIR%%_SCRIPT%fnc.cmd
 
+set "LogLevels[OFF]=0"
+set "LogLevels[INFO]=1"
+set "LogLevels[DEBUG]=2"
+set "LogLevels[TRACE]=3"
+
+set "LogSeverities[0]=OFF"
+set "LogSeverities[1]=INFO"
+set "LogSeverities[2]=DEBUG"
+set "LogSeverities[3]=TRACE"
+
 @REM =====================================================================
 @REM reset variables
 set _RC=
 set _DEBUG=
 set _TRACE=
 
-set _PROJECT=
-set _PROJECT_FOLDER=
+@REM runtime variables
 set _CREATE_FOLDER_IF_NOT_EXISTS=
 set _KEEP_FILES=
 
-@REM =====================================================================
-@REM calling macros
-call %_MACROS%
+@REM project variables
+set _PROJECT=
+set _PROJECT_FOLDER=
 
+@REM =====================================================================
 @REM calling defaults
 call %_DEFAULTS%
 
 @REM calling functions and utilities on demand (see bottom of script)
 
 @REM =====================================================================
-@REM make Log Dir if not exist
-if not exist "%_LOGDIR%" call :_make_folder "%_LOGDIR%"
-
-@REM make Help File if not exist
-if not exist "%_HELP_FILE%" call :_make_help
+@REM calling INI
+for /f "tokens=1* delims==" %%a in ('type %_INI%^|findstr /V /R "^@.*" ') do (
+   @REM @echo setting %%a=%%b
+   call set "%%a=%%b"
+   )
 
 @REM =====================================================================
-@REM calling INI
-setlocal enabledelayedexpansion
-for /f "tokens=1* delims==" %%a in ('type %_INI%') do (
-    call set %%a=%%b
+@REM calling macros
+call %_MACROS%
+
+@REM =====================================================================
+@REM process defaults
+for %%g in (%_FOLDERS%) do (
+   if not exist  %_SCRIPTDIR%%%g (
+       call :_make_folder %_SCRIPTDIR%%%g
+   )
 )
 
 @REM =====================================================================
-@REM format defaults
-if not "%_KEEP_FILES%." == "." set _KEEP_FILES=%_KEEP_FILES:"=%
-if not "%_KEEP_FILES_METHOD%." == "." set _KEEP_FILES_METHOD=%_KEEP_FILES_METHOD:"=%
-if not "%_CREATE_FOLDER_IF_NOT_EXISTS%." == "." set _CREATE_FOLDER_IF_NOT_EXISTS=%_CREATE_FOLDER_IF_NOT_EXISTS:"=%
-
+@REM make Help File if not exist
+if not exist "%_HELP_FILE%" call :_make_help
 
 @REM =====================================================================
 @REM call arg parser
@@ -615,8 +178,53 @@ call :parse_args %*
 @REM =====================================================================
 @REM --- process results and set runtime variables by options and params
 @REM =====================================================================
+
+@REM test functions
+@REM echo %_LOGINFO%
+@REM set _LOGINFO=FALSE
+set _LOG_LEVEL=1
+
+call :_set-log-level %_LOG_LEVEL%
+
+@echo _LOG_SEVERITY=%_LOG_SEVERITY%
+
+
+call :_log_info "What an Info message"
+set _TRACE=
+set _DEBUG=TRACE
+set _DEBUG=DEBUG
+
+if %_DEBUG%==TRACE (
+   set _DEBUG=DEBUG
+   set _TRACE=TRUE
+   )
+call :_log_debug "What a Debug message"
+call :_log_trace "What a Trace message"
+set _DEBUG=FALSE
+@REM no debug needed
+call :_log_warning "What a Warning message"
+call :_log_error "What an Error message"
+
 @REM display help and exit
 if "%_DISPLAY_HELP%" == "Y" call :_help && goto:eof
+
+
+
+@REM config
+if %_PARAM%==CONFIG SET _RUN=%_SCRIPT%_%_PARAM%.cmd
+if exist %_RUN%  call %_RUN% %_WHAT% %_VALUE%
+if %ERRORLEVEL% GTR 0 (
+   %_log_error% Parameter "%_PARAM%" returned with errors. Ckeck your inputs...
+   goto:eof
+)
+
+
+call :_get-project
+%_log_info% Main Project: %_PROJECT%
+
+
+goto:eof
+
 
 @REM =====================================================================
 @REM continue, so emit one empty line first
@@ -625,74 +233,8 @@ if "%_DISPLAY_HELP%" == "Y" call :_help && goto:eof
 @REM =====================================================================
 @REM set options and defaults
 
-@REM and if set, how to process?
-if "%_KEEP_FILES%" == "Y" (
-@REM echo "%_KEEP_FILES_METHOD%."
-    if not "%_KEEP_FILES_METHOD%." == "." (
-        set _METHOD_FOUND=N
-        for %%g in (%_KEEP_FILE_METHODS%) do (
-            if "%_KEEP_FILES_METHOD%" == "%%g" set "_KEEP_FILES_METHOD=%%g" && set "_METHOD_FOUND=Y"
-            if "%_KEEP_FILES_METHOD%" == "NONE" set "_KEEP_FILES=N"
-            if "%_KEEP_FILES_METHOD%" == "N" set "_KEEP_FILES=N"
-        )
-        if not "!_METHOD_FOUND!" == "Y" (
-            set "_KEEP_FILES_METHOD=%_DEFAULT_KEEP_FILES_METHOD%"
-            %_log_warn% Unknown Keep File Method: %_KEEP_FILES_METHOD%.
-            %_log_warn% Falling back to default method: %_DEFAULT_KEEP_FILES_METHOD%.
-            %_log_warn% %_line%
-            )
-    ) else (
-        set _KEEP_FILES_METHOD=%_DEFAULT_KEEP_FILES_METHOD:"=%
-    )
-)
-if "%_KEEP_FILES%" == "N" (
-    set "_KEEP_FILES_METHOD=NONE"
-)
 
 
-@REM =====================================================================
-@REM set project
-if "%_SET_PROJECT%" == "Y" call :_set_project "%_PROJECT_ROOT:"=%" "%_SET_PROJECT_NAME%"
-@REM set project context and exit if not found
-if %ERRORLEVEL% NEQ 0 goto:eof
-
-:: check project
-
-
-@REM =====================================================================
-@REM check if ticket is included in project name
-@REM
-if "%_SET_TICKET_NAME%." == "." (
-    set "_PROJECT_NAME_CONTAINS_TICKET=N"
-    @REM @echo _PROJECT_NAME_CONTAINS_TICKET_START="!_PROJECT_NAME_CONTAINS_TICKET!"
-    @REM Project Keys from INI file
-    for %%g in (%_PROJECT_KEYS:"=%) do (
-        @REM @echo %%g
-        for /F "tokens=*" %%a in ('@echo %_SET_PROJECT_NAME% ^| findstr /R "^%%g[0-9].*"^') do (
-            @REM @echo Key: "%%g" - Name: "%%a"
-            call set "_PROJECT_NAME_CONTAINS_TICKET=Y"
-        )
-    )
-)
-@REM @echo _PROJECT_NAME_CONTAINS_TICKET_END="%_PROJECT_NAME_CONTAINS_TICKET%"
-
-@REM =====================================================================
-@REM set ticket
-@REM
-if "%_SET_TICKET%" == "Y" call :_set_ticket %_SET_TICKET_NAME%
-
-@REM still empty? then try setting ticket name from project name if contained.
-@REM Project_name must contain an underscore to separate ticket from project,
-@REM like in "PRJ-1234_MyProject". Blanks in project names are not supported.
-if not "%_SET_PROJECT_NAME%." == "." (
-    if "%_PROJECT_NAME_CONTAINS_TICKET%" == "Y" (
-        if "%_SET_TICKET_NAME%." == "." (
-            for /f "tokens=1* delims=_" %%a in ("%_SET_PROJECT_NAME%") do (
-            set _SET_TICKET_NAME=%%a
-            )
-        )
-    )
-)
 
 @REM =====================================================================
 @REM all good so far, so...
@@ -703,37 +245,37 @@ if not "%_SET_PROJECT_NAME%." == "." (
 @REM =====================================================================
 @REM trace call
 if "%_TRACE%" == "TRUE" (
-        %_log_trace% %_line%
-        %_log_trace% Script: "%_SCRIPT%"
-        %_log_trace% Script Current Parameter: "%*"
-        %_log_trace% Script Ini File: "%_INI%"
-        %_log_trace% Script Log File: "%_LOG_FILE%"
-        %_log_trace% Script Help File: "%_HELP_FILE%"
-        %_log_trace% Script Util File: "%_UTILS%"
-        %_log_trace% Script Macros File: "%_MACROS%"
-        %_log_trace% Script Defaults File: "%_DEFAULTS%"
-        %_log_trace% Script Functions File: "%_FUNCTIONS%"
-        %_log_trace% %_line%
-        %_log_trace% Script Variables: _KEEP_FILES="%_KEEP_FILES%",
-        %_log_trace% Script Variables: _KEEP_FILES_METHOD="%_KEEP_FILES_METHOD%",
-        %_log_trace% Script Variables: _CREATE_FOLDER_IF_NOT_EXISTS="%_CREATE_FOLDER_IF_NOT_EXISTS%",
+       %_log_trace% %_line%
+       %_log_trace% Script: "%_SCRIPT%"
+       %_log_trace% Script Current Parameter: "%*"
+       %_log_trace% Script Ini File: "%_INI%"
+       %_log_trace% Script Log File: "%_LOG_FILE%"
+       %_log_trace% Script Help File: "%_HELP_FILE%"
+       %_log_trace% Script Util File: "%_UTILS%"
+       %_log_trace% Script Macros File: "%_MACROS%"
+       %_log_trace% Script Defaults File: "%_DEFAULTS%"
+       %_log_trace% Script Functions File: "%_FUNCTIONS%"
+       %_log_trace% %_line%
+       %_log_trace% Script Variables: _KEEP_FILES="%_KEEP_FILES%",
+       %_log_trace% Script Variables: _KEEP_FILES_METHOD="%_KEEP_FILES_METHOD%",
+       %_log_trace% Script Variables: _CREATE_FOLDER_IF_NOT_EXISTS="%_CREATE_FOLDER_IF_NOT_EXISTS%",
 )
 
 @REM debug call
 if "%_DEBUG%" == "TRUE" (
-        %_log_debug% %_line%
-        %_log_debug% Current Project: "%_PROJECT%"
-        %_log_debug% Project Root: %_ROOT%
-        %_log_debug% Project Root Folder: %_PROJECT_ROOT%
-        %_log_debug% Project Keys: %_PROJECT_KEYS%
-        %_log_debug% %_line%
-        %_log_debug% Run Variables: _DEBUG="%_DEBUG%", _DISPLAY_HELP="%_DISPLAY_HELP%",
-        %_log_debug% Run Variables: _SET_PROJECT="%_SET_PROJECT%", _SET_PROJECT_NAME="%_SET_PROJECT_NAME%",
-        %_log_debug% Run Variables: _PROJECT_NAME_CONTAINS_TICKET=%_PROJECT_NAME_CONTAINS_TICKET%,
-        %_log_debug% Run Variables: _SET_TICKET="%_SET_TICKET%", _SET_TICKET_NAME="%_SET_TICKET_NAME%",
-        %_log_debug% Run Variables: _MAKE="%_MAKE%", _MAKE_PROJECT="%_MAKE_PROJECT%", _MAKE_PROJECT_NAME="%_MAKE_PROJECT_NAME%",
-        %_log_debug% Run Variables: _MAKE_FILE="%_MAKE_FILE%", _MAKE_FILE_NAME="%_MAKE_FILE_NAME%",
-        %_log_debug% Run Variables: _MAKE_FOLDER="%_MAKE_FOLDER%", _MAKE_FOLDER_NAME="%_MAKE_FOLDER_NAME%".
+       %_log_debug% %_line%
+       %_log_debug% Current Project: "%_PROJECT%"
+       %_log_debug% Project Root: %_ROOT%
+       %_log_debug% Project Root Folder: %_PROJECT_ROOT%
+       %_log_debug% Project Keys: %_PROJECT_KEYS%
+       %_log_debug% %_line%
+       %_log_debug% Run Variables: _DEBUG="%_DEBUG%", _DISPLAY_HELP="%_DISPLAY_HELP%",
+       %_log_debug% Run Variables: _SET_PROJECT="%_SET_PROJECT%", _SET_PROJECT_NAME="%_SET_PROJECT_NAME%",
+       %_log_debug% Run Variables: _PROJECT_NAME_CONTAINS_TICKET=%_PROJECT_NAME_CONTAINS_TICKET%,
+       %_log_debug% Run Variables: _SET_TICKET="%_SET_TICKET%", _SET_TICKET_NAME="%_SET_TICKET_NAME%",
+       %_log_debug% Run Variables: _MAKE="%_MAKE%", _MAKE_PROJECT="%_MAKE_PROJECT%", _MAKE_PROJECT_NAME="%_MAKE_PROJECT_NAME%",
+       %_log_debug% Run Variables: _MAKE_FILE="%_MAKE_FILE%", _MAKE_FILE_NAME="%_MAKE_FILE_NAME%",
+       %_log_debug% Run Variables: _MAKE_FOLDER="%_MAKE_FOLDER%", _MAKE_FOLDER_NAME="%_MAKE_FOLDER_NAME%".
 )
 
 @REM =====================================================================
@@ -751,34 +293,43 @@ goto:eof
 @REM =====================================================================
 @REM Function Parse Args (kept here, since script specific)
 :parse_args
+
 @REM help
 if "%1" == "-h"              set "_DISPLAY_HELP=Y" && goto:eof
 if "%1" == "-?"              set "_DISPLAY_HELP=Y" && goto:eof
 if "%1" == "help"            set "_DISPLAY_HELP=Y" && goto:eof
 @REM debug (no quotes: pseudo boolean handling)
-if "%1" == "-d"              set _DEBUG=TRUE
-if "%1" == "debug"           set _DEBUG=TRUE
-if "%1" == "-t"              set _DEBUG=TRUE&& set _TRACE=TRUE
-if "%1" == "trace"           set _DEBUG=TRUE&& set _TRACE=TRUE
+if "%1" == "-d"              set "_DEBUG=TRUE"
+if "%1" == "debug"           set "_DEBUG=TRUE"
+if "%1" == "-t"              set "_DEBUG=TRUE" && set "_TRACE=TRUE"
+if "%1" == "trace"           set "_DEBUG=TRUE" && set "_TRACE=TRUE"
+
+
+@REM consider moving to CONFIG
+
 @REM set options (if mutually exclusive - goto:eof)
-if "%1" == "-kf"             set _KEEP_FILES=Y&& set _KEEP_FILES_METHOD=%~2
-if "%1" == "set-keep-files"  set _KEEP_FILES=Y&& set _KEEP_FILES_METHOD=%~2
-if "%1" == "-cf"             set _CREATE_FOLDER_IF_NOT_EXISTS=%~2
-if "%1" == "set-create-folder-if-not-exist"           set _CREATE_FOLDER_IF_NOT_EXISTS=%~2
+if "%1" == "-kf"             set "_KEEP_FILES=Y" && set "_KEEP_FILES_METHOD=%~2"
+if "%1" == "set-keep-files"  set "_KEEP_FILES=Y" && set "_KEEP_FILES_METHOD=%~2"
+if "%1" == "-cf"             set "_CREATE_FOLDER_IF_NOT_EXISTS=%~2"
+if "%1" == "set-create-folder-if-not-exist"           set "_CREATE_FOLDER_IF_NOT_EXISTS=%~2"
 @REM set project and ticket options
 if "%1" == "-sp"             set "_SET_PROJECT=Y"  && set "_SET_PROJECT_NAME=%~2"
 if "%1" == "set-project"     set "_SET_PROJECT=Y"  && set "_SET_PROJECT_NAME=%~2"
 if "%1" == "-st"             set "_SET_TICKET=Y"   && set "_SET_TICKET_NAME=%~2"   && goto:eof
 if "%1" == "set-ticket"      set "_SET_TICKET=Y"   && set "_SET_TICKET_NAME=%~2"   && goto:eof
-@REM param 1 MAKE
-if "%1" == "-m"              set "_MAKE=Y"
-if "%1" == "make"            set "_MAKE=Y"
-@REM param 1 MAKE arguments
-if "%1" == "-project"        set "_MAKE_PROJECT=Y" && set "_MAKE_PROJECT_NAME=%~2"
-if "%1" == "-folder"         set "_MAKE_FOLDER=Y"  && set "_MAKE_FOLDER_NAME=%~2"
-if "%1" == "-file"           set "_MAKE_FILE=Y"    && set "_MAKE_FILE_NAME=%~2"
-@REM param2 ""
-@REM param2 "" arguments
+
+@REM param CONFIG
+if "%1" == "-c"              set "_PARAM=CONFIG" && set "_WHAT=%~2" && set "_VALUE=%~3"  && goto:eof
+if "%1" == "config"            set "_PARAM=CONFIG" && set "_WHAT=%~2" && set "_VALUE=%~3"  && goto:eof
+
+@REM param SHOW
+if "%1" == "-s"              set "_PARAM=SHOW" && set "_WHAT=%~2" && set "_VALUE=%~3"  && goto:eof
+if "%1" == "show"            set "_PARAM=SHOW" && set "_WHAT=%~2" && set "_VALUE=%~3"  && goto:eof
+
+@REM param MAKE
+if "%1" == "-m"              set "_PARAM=MAKE" && set "_WHAT=%~2" && set "_VALUE=%~3"  && goto:eof
+if "%1" == "make"            set "_PARAM=MAKE" && set "_WHAT=%~2" && set "_VALUE=%~3"  && goto:eof
+
 
 @REM EO Parse Args
 shift
@@ -787,25 +338,70 @@ goto:parse_args
 
 @REM =====================================================================
 @REM Subroutine Calls in %_FUNCTIONS% and %_UTILS% File
-@REM
+
+
 @REM utilities
-:_make_help
-    %_UTILS% %_HELP_FILE%
 :_make_folder
-    %_UTILS% %_LOGDIR%
+   %_UTILS% %1
+   goto:eof
+
+:_make_help
+   %_UTILS% %_HELP_FILE% %_SCRIPT%
+   goto:eof
+
 @REM functions
 :_usage
-    %_FUNCTIONS% %_SCRIPT%
+   %_FUNCTIONS% %_SCRIPT%
+  goto:eof
+
 :_debug_call
-    %_FUNCTIONS% %1
+   %_FUNCTIONS% %1
+   goto:eof
+
 :_help
-    %_FUNCTIONS% %_HELP_FILE%
+   %_FUNCTIONS% %_HELP_FILE%
+   goto:eof
 
 @REM framework
 :_set_project
-    %_FUNCTIONS% %*
+   %_FUNCTIONS% %*
+   goto:eof
+
+:_get-project
+   for /f "tokens=1,2* delims==" %%a in ('set ^| findstr /R "^_PROJECT=.*$"') do (
+   @REM @echo %%a %%b
+   call set "%%a=%%b"
+   )
+   goto:eof
+
 :_set_ticket
-    %_FUNCTIONS% %1
+   %_FUNCTIONS% %1
+   goto:eof
+
+:_set-log-level
+   %_FUNCTIONS% %1
+   goto:eof
+
+
+:_log_info
+   %_FUNCTIONS% %*
+   goto:eof
+
+:_log_warning
+   %_FUNCTIONS% %*
+   goto:eof
+
+:_log_trace
+   %_FUNCTIONS% %*
+   goto:eof
+
+:_log_debug
+   %_FUNCTIONS% %*
+   goto:eof
+
+:_log_error
+   %_FUNCTIONS% %*
+   goto:eof
 
 @REM EOF
 goto:eof
@@ -818,5 +414,277 @@ popd
 endlocal
 @REM exit /b ERRORLEVEL
 %_ex% %ERRORLEVEL%
+@REM odev.ini (overwrites defaults if set)
+_PROJECT=
+_PROJECT_ROOT=C:\Projects
+@REM Levels: 0=OFF 1=INFO 2=DEBUG 3=TRACE
+set _LOG_LEVEL=1
+@REM log warnings to console
+set _LOG_WARNINGS=TRUE
+@REM Encoding and Codepage
+_ENCODING=.AL32UTF8
+_CODEPAGE=65001
+_FOLDERS=log,tmp,src,exp,doc
+_KEEP_FILES=ARCHIVE
+_CREATE_FOLDER_IF_NOT_EXISTS=TRUE
+        Help for "odev"
+
+more help will follow...
+@REM Defaults
+set _PROJECT=
+set _PROJECT_ROOT=C:\%USERPROFILE%\Projects
+@REM Levels: 0=OFF 1=INFO 2=DEBUG 3=TRACE
+set _LOG_LEVEL=1
+@REM log warnings to console
+set _LOG_WARNINGS=TRUE
+@REM Encoding and Codepage
+set _ENCODING=.AL32UTF8
+set _CODEPAGE=65001
+set _FOLDERS=log,tmp,src
+set _KEEP_FILES=FALSE
+set _CREATE_FOLDER_IF_NOT_EXISTS=TRUE@REM functions
+@echo on
+setlocal enableextensions
+@REM Not to be directly called
+exit /b 9009
+
+@REM ---------------------------------------------------------------------
+@REM Functions
+set NOTFOUND=
+
+
+:_help
+   more %~1
+   goto:eof
+
+:_set-log-level
+   setlocal enabledelayedexpansion
+   call set "_LOG_SEVERITY=!LogSeverities[%~1]!" & endlocal
+   goto:eof
+
+
+@REM raw log function that processes up to 10 arguments
+@REM standard log format for script messages
+@REM DATE/TIME  SEVERITY  ([ERRORLEVEL])  MESSAGE
+:_log
+       set _MSG=
+       if not "%~1." == "." set _MSG=%~1
+       if not "%~2." == "." set _MSG=%_MSG% %~2
+       if not "%~3." == "." set _MSG=%_MSG% %~3
+       if not "%~4." == "." set _MSG=%_MSG% %~4
+       if not "%~5." == "." set _MSG=%_MSG% %~5
+       if not "%_MSG%." == "." @echo.%_MSG%
+   goto:eof
+
+:_log_info
+   setlocal
+   if "%_LOGINFO%" == "TRUE" (
+       call:_log "%DATE% %TIME:~0,8%" "%_log_info%" %1
+   ) & endlocal
+   goto:eof
+
+:_log_debug
+   setlocal
+   if "%_DEBUG%" == "DEBUG" (
+       call:_log "%DATE% %TIME:~0,8%" "%_log_debug%" %1
+   ) & endlocal
+   goto:eof
+
+:_log_trace
+   setlocal
+   if "%_TRACE%" == "TRUE" (
+       call:_log "%DATE% %TIME:~0,8%" "%_log_trace%" %1
+   )  & endlocal
+   goto:eof
+
+:_log_warning
+   setlocal
+   call:_log "%DATE% %TIME:~0,8%" "%_log_warn%" %1 & endlocal
+   goto:eof
+
+:_log_error
+   setlocal
+   if not "%2." == "." set _ERR=^[%~2^]
+   if "%2." == "." ( set _ERR=^[%_default_error%^] )
+   call:_log "%DATE% %TIME:~0,8%" "%_log_error%" "%_ERR%" %1 & endlocal
+   goto:eof
+
+
+:_usage
+   @echo.
+   @echo.Usage: %~1 (options) [params]. Type %~1 -h for more information.
+   goto:eof
+
+
+:_debug_call
+   %_log_debug% %~1
+   goto:eof
+
+:_check_option
+   setlocal enabledelayedexpansion
+   set NOTFOUND=1
+   set _OPTIONLIST=%1
+   set _OPTION=%~2
+   for %%g in (%_OPTIONLIST:"=%) do (
+@REM    @echo %%g = !_OPTION!
+       if %%g==!_OPTION! set NOTFOUND=0
+   )
+   %_ex% !NOTFOUND!
+
+
+:_-st
+   call :_set %~1 %~2
+   goto:eof
+
+:_set-ticket
+   call :_set %~1 %~2
+   goto:eof
+
+:_-sp
+   call :_set %~1 %~2
+   goto:eof
+
+:_set-project
+   call :_set _PROJECT %~2
+
+   goto:eof
+
+@REM main _set function
+:_set
+   call set "%~1=%~2"
+   goto:eof
+
+:_-gp
+   call :_get %~1
+   goto:eof
+
+:_get-project
+   call :_get %~1
+   goto:eof
+
+@REM main _get function
+
+:_get
+   @REM @echo Getting %~1
+   set | findstr /R "^%~1=.*$"
+   set /A _RC=%ERRORLEVEL%*-1
+   %_ex% %_RC%
+   goto:eof
+
+
+
+@REM exit Functions
+%_ex%
+@REM macros
+@echo off
+@REM Macros and Variables
+set _ex=exit /b
+
+@REM Messages
+set _m=@echo %DATE% %TIME%
+@REM set _log_info=%_m%----[INFO]:
+@REM set _log_error=%_m%---[ERROR]:
+@REM set _log_warn=%_m%-[WARNING]:
+@REM set _log_debug=%_m%---[DEBUG]:
+@REM Exit Macros
+
+set _default_error=9009
+
+set _log_info=-----[INFO]:
+set _log_error=----[ERROR]:
+set _log_warn=--[WARNING]:
+set _log_debug=----[DEBUG]:
+set _log_trace=----[TRACE]:
+
+
+
+%_ex%
+@REM utils
+@echo off
+setlocal enableextensions
+@REM Not to be directly called
+exit /b 9009
+
+@REM ---------------------------------------------------------------------
+@REM Utilities
+
+:_make_help
+   %_log_info% Making "%~2" Help File
+   @echo.>%~1
+   @echo.         Help for "%~2">>%~1
+   @echo.>>%~1
+   @echo  more help will follow...>>%~1
+   goto:eof
+
+:_make_folder
+     if not exist %~1 (
+       %_log_info% Making Directory %1
+       md %~1>nul
+       )
+   goto:eof
+
+%_ex%
+@echo off
+@REM setlocal enableextensions
+@REM =====================================================================
+@REM script variables
+set _SCRIPT=%~n0
+set _SCRIPTNAME=%0
+@REM =====================================================================
+@REM @echo Params "%*"
+@REM =====================================================================
+@REM check mandatory parameter
+if "[%2]"=="[]" (
+   @echo. & @echo Usage: %_SCRIPT% ^(options^) ^[params^]
+   @echo Type %_SCRIPT% -h for more information.
+   @echo.
+   endlocal
+   exit /b)
+
+@REM =====================================================================
+@REM script variables
+set _CONFIG_OPTION=%~1
+set _CONFIG_OPTIONS=set-project,-sp,get-project,gp,set-ticket,st,get-ticket,gt
+set _CONFIG_VALUE=%~2
+set _RC=OK
+
+@REM @echo Script: %_SCRIPT%  Option: %_CONFIG_OPTION%  Value: %_CONFIG_VALUE%
+
+call :_check_option
+if %ERRORLEVEL% NEQ 0 (
+   set _RC=NOK && %_log_error% Invalid Option: "%_CONFIG_OPTION%" && goto:eof
+   ) else (
+   %_log_info% %_SCRIPT% option check: %_RC%
+)
+
+
+%_log_info% calling :_%_CONFIG_OPTION%
+call :_%_CONFIG_OPTION%
+
+%_log_info% Project set: %_PROJECT%
+
+@REM =====================================================================
+@REM skip subroutines
+goto:eof
+
+@REM =====================================================================
+@REM subroutines
+
+:_check_option
+%_FUNCTIONS% "%_CONFIG_OPTIONS%" "%_CONFIG_OPTION%"
+goto:eof
+
+:_set-project
+%_FUNCTIONS% "_PROJECT" "%_CONFIG_VALUE%"
+goto:eof
+
+:_get-project
+%_FUNCTIONS% "_PROJECT"
+goto:eof
+
+
+:eof
+@REM endlocal
+@REM exit /b
 
 
