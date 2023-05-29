@@ -1,14 +1,5 @@
-
-"@REM .gitignore"
-
-
-_current_project
-log
-tmp
-exp/done
-
-"@REM oad.cmd"
-
+"@REM oad.cmd"  
+  
 @REM ---------------------------------------------------------------------
 @REM odev.bat
 @echo off
@@ -97,13 +88,14 @@ call %_DEFAULTS%
 
 @REM =====================================================================
 @REM Initialize
-call :_log_debug %_line%
-call :_log_debug "%_SCRIPT_BANNER:"=%"
-call :_log_debug %_line%
+call :_log_debug %_line% "BOTH"
+call :_log_debug "%_SCRIPT_BANNER%" "BOTH"
+call :_log_debug %_line% "BOTH"
 call :_log_debug "Initializing %_SCRIPT%..."
 call :_log_trace %_line%
 call :_log_trace "Script: %_SCRIPT%"
 call :_log_trace "Script Current Parameter: %*"
+call :_log_trace "Script Log Mode: %_LOG_MODE%"
 call :_log_trace "Script Ini File: %_INI%"
 call :_log_trace "Script Log File: %_LOG_FILE%"
 call :_log_trace "Script Help File: %_HELP_FILE%"
@@ -122,6 +114,7 @@ for /f "tokens=1* delims==" %%a in ('type %_INI%^|findstr /V /R "^;.*" ') do (
 @REM =====================================================================
 @REM calling Current Project
 if exist %_SCRIPTDIR%%_CURRENT_PROJECT_FILE% (
+   call :_log_debug %_line%
    call :_log_debug "%_SCRIPT%: Setting Project from %_CURRENT_PROJECT_FILE%"
    for /f "tokens=1* delims==" %%a in ('type %_SCRIPTDIR%%_CURRENT_PROJECT_FILE%') do (
       call set "%%a=%%b"
@@ -154,8 +147,8 @@ call :_make_helpfiles "%_SCRIPT%" "%_README%" "%_HTDOC%" "%_HELP_FILE%"
 
 @REM =====================================================================
 @REM call arg parser
-call :_log_debug %_line%
-call :_log_debug "%_SCRIPT%: Running Parse Arguments"
+call :_log_debug %_line% "BOTH"
+call :_log_debug "%_SCRIPT%: Running Parse Arguments" "BOTH"
 call :parse_args %*
 
 @REM =====================================================================
@@ -166,7 +159,7 @@ call :parse_args %*
 SET NLS_LANG=%_ENCODING%
 chcp %_CODEPAGE%>nul
 call :_log_trace "%_SCRIPT%: Encoding: %NLS_LANG% - Codepage: %_CODEPAGE%"
-call :_log_debug %_line%
+call :_log_debug %_line% "BOTH"
 
 @REM =====================================================================
 @REM display help and exit
@@ -183,21 +176,22 @@ if exist "%_HELP_FILE%" (
 @REM =====================================================================
 @REM setting log_level again
 @REM (ini directive: _LOG_LEVEL can be modified by -d and -t option)
-call :_log_debug "%_SCRIPT%: Setting Log Level %_LOG_LEVEL%..."
-call :_set-log-level %_LOG_LEVEL%
+call :_set-log-level "%_LOG_LEVEL%"
+call :_log_debug "%_line%" "BOTH"
+call :_log_debug "%_SCRIPT%: Setting Log Level %_LOG_LEVEL%..." "BOTH"
 
 @REM =====================================================================
 @REM set options and defaults
 @REM =====================================================================
 @REM trace call after parse args
-call :_log_trace %_line%
+call :_log_trace "%_line%"
 call :_log_trace "%_SCRIPT%: Script Parameter: _PARAM=%_PARAM%"
 
 @REM =====================================================================
 @REM initialize log
-call :_log_info %_line%
-call :_log_info "%_SCRIPT_BANNER:"=%"
-call :_log_info %_line%
+call :_log_info %_line% "BOTH"
+call :_log_info %_SCRIPT_BANNER% "BOTH"
+call :_log_info %_line% "BOTH"
 
 @REM =====================================================================
 @REM CONFIG
@@ -232,7 +226,7 @@ if "%_OPT_VAL%."=="." (
       )
 
 if not [%_PROJECT%]==[] (
-   call :_log_info "%_SCRIPT%: Project configured: %_PROJECT%"
+   call :_log_info "%_SCRIPT%: Project configured: %_PROJECT%" "BOTH"
    call :_log_debug "%_SCRIPT%: _PROJECT_ROOT=%_PROJECT_ROOT%"
    call :_write_project_conf %_PROJECT%
    )
@@ -245,7 +239,7 @@ set _PRJDOC=%_PROJECT_FOLDER%%_PROJECT_DOC_DIR%
 call :_log_debug "%_SCRIPT%: _PRJDOC=%_PRJDOC%"
 
 if exist %_PROJECT_FOLDER% (
-   call :_log_info "%_SCRIPT%: Project Folder %_PROJECT_FOLDER% exists."
+   call :_log_info "%_SCRIPT%: Project Folder %_PROJECT_FOLDER% exists." "BOTH"
    call :_make_project_subfolders "%_PROJECT_FOLDER%" "%_PROJECT_SUBFOLDERS%"
    call :_make_helpfiles "%_PROJECT%" "%_PROJECT_FOLDER%\%_READMETXT%" "%_PRJDOC%\%_HTDOCMD%" "%_PRJDOC%\%_HELPTXT%"
    )
@@ -263,16 +257,16 @@ endlocal
 @REM Check if Ticket is set
 if [%_TICKET%]==[] (
    if not [%_PROJECT%]==[] (
-         call :_log_info "%_SCRIPT%: Ticket NOT set. Try setting it from Project name."
+         call :_log_info "%_SCRIPT%: Ticket NOT set. Try setting it from Project name." "BOTH"
          call :_log_debug "%_SCRIPT%: PROJECT_KEYS=%_PROJECT_KEYS:"=%"
          call :_get-ticket-from-project %_PROJECT_KEYS% "%_PROJECT%"
       )
    )
 
 if not [%_TICKET%]==[] (
-   call :_log_info "%_SCRIPT%: Ticket set: %_TICKET%"
+   call :_log_info "%_SCRIPT%: Ticket set: %_TICKET%" "BOTH"
 ) else (
-   call :_log_warning "%_SCRIPT%: Ticket not set. GIT functionality will not be available."
+   call :_log_warning "%_SCRIPT%: Ticket not set. GIT functionality will not be available." "BOTH"
 )
 
 @REM Script Option Processing (only visible in DEBUG mode)
@@ -364,7 +358,8 @@ if not exist %_PROJECT_FOLDER% (
    call :_make_folder %_PROJECT_FOLDER% && call :_log_info "%_SCRIPT%: Done..."
    goto :_MAKE_SUBFOLDERS
    )
-@echo _MAKE_OPT_ARG=%_MAKE_OPT_ARG%
+
+@REM @echo _MAKE_OPT_ARG=%_MAKE_OPT_ARG%
 
 if exist %_PROJECT_FOLDER% (
    if not ["%_MAKE_OPT_ARG%"]==["clean"] (
@@ -422,7 +417,7 @@ call :_log_trace "Script Variables: _CREATE_IF_NOT_EXISTS=%_CREATE_IF_NOT_EXISTS
 call :_log_trace "Runtime Variables: _DEBUG=%_DEBUG%, _DISPLAY_HELP=%_DISPLAY_HELP%"
 @REM debug call
 call :_log_debug %_line%
-call :_log_debug "Current Project: %_PROJECT%"
+call :_log_debug "Current Project: %_PROJECT%" "BOTH"
 call :_log_debug "Project Conf: %_PROJECT_CONF%"
 call :_log_debug "Project Root Folder: %_PROJECT_ROOT%"
 call :_log_debug "Project Keys: %_PROJECT_KEYS:"=%"
@@ -445,19 +440,19 @@ call :_log_debug "Project Lib Directory=%_PROJECT_LIB_DIR%"
 @REM =====================================================================
 @REM all good so far, so...
 :_continue
-call :_log_info %_line%
-call :_log_info "%_SCRIPT%: Starting %_SCRIPT%"
+call :_log_info %_line% "BOTH"
+call :_log_info "%_SCRIPT%: Starting %_SCRIPT%" "BOTH"
 
 @REM =====================================================================
 @REM processing
-call :_log_info %_line%
-call :_log_info "----- Processing"
+call :_log_info %_line% "BOTH"
+call :_log_info "----- Processing" "BOTH"
 
 
 
 call :_log_info %_line%
-call :_log_info "Done %_SCRIPT% [%ERRORLEVEL%]"
-call :_log_info %_line%
+call :_log_info "Done %_SCRIPT% [%ERRORLEVEL%]" "BOTH"
+call :_log_info %_line% "BOTH"
 
 @REM =====================================================================
 @REM Skip all SUB ROUTINES
@@ -667,24 +662,59 @@ goto:eof
    %_FUNCTIONS% %1
    goto:eof
 
+:_set-log-mode
+   %_FUNCTIONS% %1
+   goto:eof
+
 :_log_info
-   %_FUNCTIONS% %*
+   if not [%2]==[] (
+      set _LOGMODE=%~2
+   ) else (
+      set _LOGMODE=%_LOG_MODE%
+   )
+   %_FUNCTIONS% "%_LOGMODE%" "%_LOG_FILE%" "%~1"
+   set _LOGMODE=
    goto:eof
 
 :_log_warning
-   %_FUNCTIONS% %*
+   if not ["%2."]==["."] (
+      set _LOGMODE=%~2
+   ) else (
+      set _LOGMODE=%_LOG_MODE%
+   )
+   %_FUNCTIONS% "%_LOGMODE%" "%_LOG_FILE%" "%~1"
+   set _LOGMODE=
    goto:eof
 
 :_log_trace
-   %_FUNCTIONS% %*
+      if not ["%2."]==["."] (
+      set _LOGMODE=%~2
+   ) else (
+      set _LOGMODE=%_LOG_MODE%
+   )
+   %_FUNCTIONS% "%_LOGMODE%" "%_LOG_FILE%" "%~1"
+   set _LOGMODE=
    goto:eof
 
 :_log_debug
-   %_FUNCTIONS% %*
+   if not ["%2."]==["."] (
+      set _LOGMODE=%~2
+   ) else (
+      set _LOGMODE=%_LOG_MODE%
+   )
+   @REM @echo "_LOGMODE=%_LOGMODE%"
+   %_FUNCTIONS% "%_LOGMODE%" "%_LOG_FILE%" "%~1"
+   set _LOGMODE=
    goto:eof
 
 :_log_error
-   %_FUNCTIONS% %*
+   if not ["%2."]==["."] (
+      set _LOGMODE=%~2
+   ) else (
+      set _LOGMODE=%_LOG_MODE%
+   )
+   %_FUNCTIONS% "%_LOGMODE%" "%_LOG_FILE%" "%~1"
+   set _LOGMODE=
    goto:eof
 
 @REM ==========================================================================
@@ -702,416 +732,9 @@ popd
 endlocal
 @REM exit /b %ERRORLEVEL%
 %_ex% %ERRORLEVEL%
-
-"@REM oad.ini"
-
-; ==========================================================================
-; odev.ini (overwrites defaults if set)
-; [Project]
-_PROJECT=
-_PROJECT_ROOT=U:\git\WWS\_DSD\Projects
-; parent folder to your projects (must provide no leading, but a trailing \)
-_PROJECT_FOLDER_PREFIX=WWS\
-_PROJECT_CONF=.project.conf
-_PROJECT_KEYS="JIRA- APEX-,NODE-,ORA-"
-_PROJECT_DOC_DIR=DOC
-; place sub-subfolders that contain \ at end of string
-_PROJECT_SUBFOLDERS=ARC,ARC\Builds,ARC\Sources,ARC\Documents,BLD,DOC,LIB,LOG,SRC,TMP
-_GITIGNORE_OBJECTS=ARC,LOG,TMP
-; Encoding and Codepage
-; [Encoding]
-_ENCODING=.AL32UTF8
-_CODEPAGE=65001
-; [Options]
-; Levels: 0=OFF 1=INFO 2=DEBUG 3=TRACE
-_LOG_LEVEL=1
-; log warnings to console [TRUE|FALSE]
-_LOG_WARNINGS=TRUE
-; _KEEP_FILES [NONE|ARCHIVE|MOVE]
-_KEEP_FILES=ARCHIVE
-; Folder and File handling
-_CREATE_IF_NOT_EXISTS=TRUE
-_CREATE_GITIGNORE=TRUE
-_CREATE_README=TRUE
-_CREATE_HTDOC=TRUE
-_CREATE_HELP=TRUE
-"@REM oaddef.cmd"
-
-@REM ==========================================================================
-@REM Script Defaults
-set _PROJECT=
-set _PROJECT_ROOT=C:\%USERPROFILE%\Projects
-@REM parent folder to your projects (must provide no leading, but a trailing \)
-set _PROJECT_FOLDER_PREFIX=
-set _PROJECT_CONF=.project.conf
-set _PROJECT_SUBFOLDERS=ARC,ARC\Builds,ARC\Sources,ARC\Documents,BLD,DOC,LIB,LOG,SRC,TMP
-set _GITIGNORE_OBJECTS=arc,log,tmp
-set _PROJECT_KEYS="JIRA-,APEX-,ORA-"
-set _PROJECT_DOC_DIR=DOC
-@REM Levels: 0=OFF 1=INFO 2=DEBUG 3=TRACE
-set _LOG_LEVEL=1
-@REM log warnings to console
-set _LOG_WARNINGS=TRUE
-@REM Encoding and Codepage
-set _ENCODING=.AL32UTF8
-set _CODEPAGE=65001
-set _FOLDERS=log,tmp,src
-set _KEEP_FILES=FALSE
-set _CREATE_IF_NOT_EXISTS=FALSE
-set _CREATE_GITIGNORE=FALSE
-set _CREATE_README=TRUE
-set _CREATE_HTDOC=FALSE
-set _CREATE_HELP=FALSE
-"@REM oadfnc.cmd"
-
-@echo on
-setlocal enableextensions
-@REM ==========================================================================
-@REM Functions
-
-@REM Not to be directly called
-exit /b 9009
-
-@REM ---------------------------------------------------------------------
-@REM Help
-:_help
-   more %~1
-   goto:eof
-
-@REM Logging
-:_set-log-level
-   set _THIS=%~n0:_set-log-level
-   @REM get length of array to reset higher logging levels
-   call :_get-chr-array-length LogLevels ArraySize
-   call :_log_trace "%_THIS%: There are %ArraySize% Log Levels."
-   if %~1 GTR %ArraySize% (
-      call :_log_warning "%_THIS%: desired Log Level: %~1 will be reset to max level %ArraySize%."
-      set "_LL=%ArraySize%"
-      ) else (
-         set "_LL=%~1"
-         )
-   setlocal enabledelayedexpansion
-   set "_LS=!LogSeverities[%_LL%]!"
-   call :_log_trace "%_THIS%: Current Log Level: %_LL% (!LogSeverities[%_LL%]!)."
-   endlocal & set "_LOG_LEVEL=%_LL%" & set "_LOG_SEVERITY=%_LS%"
-   goto:eof
-
-
-@REM raw log function that processes up to 9 arguments
-@REM standard log format for script messages
-@REM DATE/TIME  SEVERITY  ([ERRORLEVEL])  MESSAGE
-:_log
-    setlocal
-    set _MSG=
-       if not "%~1." == "." set _MSG=%~1
-       if not "%~2." == "." set _MSG=%_MSG% %~2
-       if not "%~3." == "." set _MSG=%_MSG% %~3
-       if not "%~4." == "." set _MSG=%_MSG% %~4
-       if not "%~5." == "." set _MSG=%_MSG% %~5
-       if not "%~5." == "." set _MSG=%_MSG% %~5
-       if not "%~6." == "." set _MSG=%_MSG% %~6
-       if not "%~7." == "." set _MSG=%_MSG% %~7
-       if not "%~8." == "." set _MSG=%_MSG% %~8
-       if not "%~9." == "." set _MSG=%_MSG% %~9
-       if not "%_MSG%." == "." @echo.%_MSG%
-   endlocal
-   goto:eof
-
-:_log_info
-   setlocal
-   if %_LOG_LEVEL% GEQ %LogLevels[INFO]% (
-       call:_log "%DATE% %TIME:~0,8%" "%_log_info%" %1
-   ) & endlocal
-   goto:eof
-
-:_log_debug
-   setlocal
-   if %_LOG_LEVEL% GEQ %LogLevels[DEBUG]% (
-       call:_log "%DATE% %TIME:~0,8%" "%_log_debug%" %1
-   ) & endlocal
-   goto:eof
-
-:_log_trace
-   setlocal
-   if %_LOG_LEVEL% GEQ %LogLevels[TRACE]% (
-       call:_log "%DATE% %TIME:~0,8%" "%_log_trace%" %1
-   )  & endlocal
-   goto:eof
-
-:_log_warning
-   setlocal
-   if "%_LOG_WARNINGS%"=="TRUE" (
-      if %_LOG_LEVEL% GEQ %LogLevels[INFO]% (
-         call:_log "%DATE% %TIME:~0,8%" "%_log_warn%" %1
-         )
-      ) & endlocal
-   goto:eof
-
-:_log_error
-   setlocal
-   @REM setting Errorlevel
-   if not "%2." == "." (
-      set _ERR=^[%~2^] ) else (
-   @REM reset to %_default_error% if no Errorlevel was passed
-   set _ERR=^[%_default_error%^]
-   )
-   if %_LOG_LEVEL% GEQ %LogLevels[INFO]% (
-      call:_log "%DATE% %TIME:~0,8%" "%_log_error%" %1 "%_ERR%"
-   ) & endlocal
-   goto:eof
-
-:_usage
-   @echo.
-   @echo.Usage: %~1 (options) [params]. Type %~1 -h for more information.
-   goto:eof
-
-@REM =====================================================================
-@REM processing options
-
-@REM parse options
-:_parse_config_options
-set _THIS=%~n0:_parse_config_options
-set _OPTIONS=%1
-set _OPT_VAL=%_OPTIONS:"=%
-set _OPT_VAL=%_OPT_VAL:+=,%
-set _OPT_VAL=%_OPT_VAL:/=%
-call :_log_trace "%_THIS%: _OPTIONS=%_OPT_VAL%"
-set _PROJECT_SET=%~2
-set _TICKET_SET=%~3
-set _KEEP_FILES_SET=%~4
-set _CREATE_FOLDER_SET=%~5
-set _LOG_LEVEL_SET=%~6
-setlocal enabledelayedexpansion
-for %%g in (%_OPT_VAL%) do (
-   call :_log_trace "%_THIS%: Check option: %%g"
-    for /f "tokens=1,2 delims=:" %%x in ('@echo %%g') do (
-        set _CONFIG_OPTION=%%x
-        set _CONFIG_VALUE=%%y
-        if [!_CONFIG_VALUE!]==[] (
-           call :_log_error "%_THIS%: _CONFIG_VALUE empty!"
-           %_ex_error%
-           )
-        call :_log_trace "%_THIS%: _CONFIG_OPTION=!_CONFIG_OPTION!"
-        call :_log_trace "%_THIS%: _CONFIG_VALUE=!_CONFIG_VALUE!"
-        call :_check_option "!_CONFIG_OPTIONS!" "!_CONFIG_OPTION!"
-        if !ERRORLEVEL! NEQ 0 (
-            call :_log_error "%_THIS%: Invalid Option: "!_CONFIG_OPTION!"" "!ERRORLEVEL!"
-            %_ex% 1
-        ) else (
-            call :_log_debug "%_THIS%: %_SCRIPT% Option check returned: !ERRORLEVEL!"
-            call :_log_debug "%_THIS%: Calling function :_!_CONFIG_OPTION! with !_CONFIG_VALUE!"
-            call :_!_CONFIG_OPTION! !_CONFIG_VALUE!
-        )
-   )
-)
-endlocal & set "%_PROJECT_SET%=%_PROJECT%" & set "%_TICKET_SET%=%_TICKET%" & set "%_KEEP_FILES_SET%=%_KEEP_FILES%" & set "%_CREATE_FOLDER_SET%=%_CREATE_IF_NOT_EXISTS%" & set "%_LOG_LEVEL_SET%=%_LOG_LEVEL%" & %_ex% %ERRORLEVEL%
-   goto:eof
-
-@REM =====================================================================
-@REM parse MALE options
-:_parse_make_options
-set _THIS=%~n0:_parse_make_options
-set _OPTION_VAL=%~1
-set _OPTION_LIST=%~2
-call :_log_trace "%_THIS%: _OPTION_LIST=%_OPTION_LIST% _OPTION_VAL=%_OPTION_VAL%"
-setlocal enabledelayedexpansion
-for %%g in (%_OPTION_VAL%) do (
-   call :_log_trace "%_THIS%: Check option: %%g"
-      call :_log_trace "%_THIS%: _MAKE_OPTION_LIST=!_OPTION_LIST!"
-      call :_log_trace "%_THIS%: _MAKE_VALUE=!_OPTION_VAL!"
-      call :_check_option "!_OPTION_LIST!" "!_OPTION_VAL!"
-      if !ERRORLEVEL! NEQ 0 (
-         call :_log_error "%_THIS%: Invalid Option: "!_OPTION_VAL!"" "!ERRORLEVEL!"
-         %_ex% 1
-      ) else (
-         call :_log_debug "%_THIS%: %_SCRIPT% Option check returned: !ERRORLEVEL!"
-      )
-   )
-endlocal & %_ex% %ERRORLEVEL%
-   goto:eof
-
-@REM =====================================================================
-@REM check option arguments against array of valid values (exact match)
-:_check_option_value
-set _THIS=%~n0:_check_option_value
-set _VALUE=%~1
-set _VALUELIST=%2
-set _NOTFOUND_SET=%~3
-set NOTFOUND=
-setlocal enabledelayedexpansion
-set NOTFOUND=1
-call :_log_trace "%_THIS%: _VALUELIST=%_VALUELIST:"=% _VALUE=%_VALUE%"
-for %%g in (%_VALUELIST:"=%) do (
-   call :_log_trace "%_THIS% [%%g] = [!_VALUE!]"
-   if %%g==!_VALUE! set NOTFOUND=0
-)
-endlocal & call :_log_trace "%_THIS% [%NOTFOUND%]" & set "%_NOTFOUND_SET%=%NOTFOUND%" & %_ex% %NOTFOUND%
-goto:eof
-
-@REM =====================================================================
-@REM get ticket name from project if contained
-:_get-ticket-from-project
-   set _THIS=%~n0:_get-ticket-from-project
-   set PRJKEYS=%1
-   set PRJ=%~2
-   @REM check via regexp
-   call :_check_option_r %PRJKEYS% "%PRJ%"
-   set _ERR=%ERRORLEVEL%
-   call :_log_trace "%_THIS%: Return: %_ERR%"
-   if "%_ERR%"=="0" (
-      call :_log_trace "%_THIS%: Ticketprefix found, so continue..."
-      setlocal enabledelayedexpansion
-      set TICKET=
-      for /f "tokens=1,2 delims=_" %%t in ('@echo %PRJ%') do (
-         call :_log_trace "%_THIS%: TICKET: %%t"
-         set TICKET=%%t
-      )
-   )
-   endlocal & set "_TICKET=%TICKET%" & %_ex_ok%
-   goto:eof
-
-@REM check option arguments against array of valid values (exact match)
-:_check_option
-   set _THIS=%~n0:_check_option
-    set NOTFOUND=
-    setlocal enabledelayedexpansion
-    set NOTFOUND=1
-    set _OPTIONLIST=%1
-   call :_log_trace "%_THIS%: _OPTIONLIST=%_OPTIONLIST:"=%"
-    set _OPTION=%~2
-    for %%g in (%_OPTIONLIST:"=%) do (
-      call :_log_trace "%_THIS% %%g = !_OPTION!"
-      if %%g==!_OPTION! set NOTFOUND=0
-    )
-   endlocal & %_ex% %NOTFOUND%
-   goto:eof
-
-@REM check option arguments against array with regexp
-:_check_option_r
-   set _THIS=%~n0:_check_option_r
-   set NOTFOUND=
-   set KEYS=%~1
-   set VAL=%~2
-   call :_log_trace "%_THIS%: Keys: %KEYS%  Value: %VAL%"
-   setlocal enabledelayedexpansion
-   set NOTFOUND=1
-   for %%g in (%KEYS:"=%) do (
-      call :_log_trace "%_THIS%: Checking Key %%g"
-      echo %VAL% | findstr /R "%%g">nul & set NOTFOUND=%ERRORLEVEL%
-   )
-   endlocal & %_ex% %NOTFOUND%
-   goto:eof
-
-
-:_st
-   call :_set _TICKET %~1
-   goto:eof
-
-:_set-ticket
-   call :_set _TICKET %~1
-   goto:eof
-
-:_sp
-   call :_set _PROJECT %~1
-   goto:eof
-
-:_set-project
-   call :_set _PROJECT %~1
-   goto:eof
-
-:_sk
-   call :_set _KEEP_FILES %~1
-   goto:eof
-
-:_set-keep-files
-   call :_set _KEEP_FILES %~1
-   goto:eof
-
-:_sce
-   call :_set _CREATE_IF_NOT_EXISTS %~1
-   goto:eof
-
-:_set-create-if-not-exist
-   call :_set _CREATE_IF_NOT_EXISTS %~1
-   goto:eof
-
-
-@REM main _set function
-:_set
-   call set "%~1=%~2"
-   goto:eof
-
-:_gp
-   call :_get %~1
-   goto:eof
-
-:_get-project
-   call :_get %~1
-   goto:eof
-
-@REM main _get function
-:_get
-   set _THIS=%~n0:_get
-   call :_log_trace "%_THIS% Getting %~1"
-   set | findstr /R "^%~1=.*$"
-   set /A _RC=%ERRORLEVEL%*-1
-   %_ex% %_RC%
-   goto:eof
-
-@REM Utility Functions
-:_get-chr-array-length
-   %_UTILS% %*
-   goto:eof
-
-:_get-int-array-length
-   %_UTILS% %*
-   goto:eof
-
-:_get-array-length
-   %_UTILS% %*
-   goto:eof
-
-@REM ==========================================================================
-@REM exit Functions
-%_ex%
-
-"@REM oadmac.cmd"
-
-@REM ---------------------------------------------------------------------
-@REM Macros and Variables
-@echo off
-
-@REM Exit Subroutines and Scripts
-set _ex=exit /b
-
-@REM Status Codes
-set _ok=0
-set _nok=1
-set _warn=-1
-set _err=%_nok%
-set _default_error=9009
-
-@REM Exit with status
-set _ex_ok=%_ex% %_ok%
-set _ex_error=%_ex% %_err%
-set _ex_warning=%_ex% %_warn%
-
-@REM Message Prefixes
-set _log_info=-----[INFO]:
-set _log_error=----[ERROR]:
-set _log_warn=--[WARNING]:
-set _log_debug=----[DEBUG]:
-set _log_trace=----[TRACE]:
-
-@REM formatting
-set _line="==========================================================================="
-
-
-@REM Exit Macros
-%_ex% 0
-
-"@REM oadutl.cmd"
-
+ 
+"@REM oadutl.cmd"  
+  
 @echo off
 setlocal enableextensions
 
@@ -1224,9 +847,450 @@ exit /b 9009
 
 @REM Exit Utilities
 %_ex%
+ 
+"@REM oadmac.cmd"  
+  
+@REM ---------------------------------------------------------------------
+@REM Macros and Variables
+@echo off
 
-"@REM oad_config.cmd"
+@REM Exit Subroutines and Scripts
+set _ex=exit /b
 
+@REM Status Codes
+set _ok=0
+set _nok=1
+set _warn=-1
+set _err=%_nok%
+set _default_error=9009
+
+@REM Exit with status
+set _ex_ok=%_ex% %_ok%
+set _ex_error=%_ex% %_err%
+set _ex_warning=%_ex% %_warn%
+
+@REM Message Prefixes
+set _log_info=-----[INFO]:
+set _log_error=----[ERROR]:
+set _log_warn=--[WARNING]:
+set _log_debug=----[DEBUG]:
+set _log_trace=----[TRACE]:
+
+@REM formatting
+set _line="==========================================================================="
+
+
+@REM Exit Macros
+%_ex% 0
+ 
+"@REM README.txt"  
+  
+
+Readme for "oad"
+
+Description
+See: U:\git\WWS\_DSD\Projects\OAD\doc\oad_help.txt
+or U:\git\WWS\_DSD\Projects\OAD\doc\README.md
+for more information...
+
+EOF
+
+ 
+"@REM oadfnc.cmd"  
+  
+@echo on
+setlocal enableextensions
+@REM ==========================================================================
+@REM Functions
+
+@REM Not to be directly called
+exit /b 9009
+
+@REM ---------------------------------------------------------------------
+@REM Help
+:_help
+   more %~1
+   goto:eof
+
+@REM Logging
+:_set-log-level
+   set _THIS=%~n0:_set-log-level
+   @REM get length of array to reset higher logging levels
+   call :_get-chr-array-length LogLevels ArraySize
+   call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: There are %ArraySize% Log Levels."
+   if %~1 GTR %ArraySize% (
+      call :_log_warning "%_THIS%: desired Log Level: %~1 will be reset to max level %ArraySize%."
+      set "_LL=%ArraySize%"
+      ) else (
+         set "_LL=%~1"
+         )
+   setlocal enabledelayedexpansion
+   set "_LS=!LogSeverities[%_LL%]!"
+   @REM call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: Current Log Level: %_LL% (!LogSeverities[%_LL%]!)."
+   endlocal & set "_LOG_LEVEL=%_LL%" & set "_LOG_SEVERITY=%_LS%"
+   goto:eof
+
+@REM  Set Log Level
+:_set-log-mode
+   set _THIS=%~n0:_set-log-level
+   setlocal enabledelayedexpansion
+   call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: Setting Log Mode to: %~1."
+   endlocal & set "_LOG_MODE=%~1"
+   goto:eof
+
+@REM raw log function that processes up to 9 arguments
+@REM standard log format for script messages
+@REM DATE/TIME  SEVERITY  ([ERRORLEVEL])  MESSAGE
+:_log
+   setlocal
+   set _MSG=
+      if not "%~1." == "." set _MSG=%~1
+      if not "%~2." == "." set _MSG=%_MSG% %~2
+      if not "%~3." == "." set _MSG=%_MSG% %~3
+      if not "%~4." == "." set _MSG=%_MSG% %~4
+      if not "%~5." == "." set _MSG=%_MSG% %~5
+      if not "%~6." == "." set _MSG=%_MSG% %~6
+      if not "%~7." == "." set _MSG=%_MSG% %~7
+      if not "%~8." == "." set _MSG=%_MSG% %~8
+      if not "%~9." == "." set _MSG=%_MSG% %~9
+      @REM if not "%MSG%." == "." @echo.%_MSG%
+      @echo.%_MSG%
+   endlocal
+   goto:eof
+
+:_log_info
+   setlocal
+   set _LOGMODE=%~1
+   set _LOGFILE=%~2
+   if %_LOG_LEVEL% GEQ %LogLevels[INFO]% (
+      @REM call:_log "%DATE% %TIME:~0,8%" "%_log_info%" %3
+      if "%_LOGMODE%"=="CONSOLE" call:_log "%DATE% %TIME:~0,8%" "%_log_info%" %3
+      if "%_LOGMODE%"=="FILE" call:_log "%DATE% %TIME:~0,8%" "%_log_info%" %3 >> %_LOGFILE%
+      if "%_LOGMODE%"=="BOTH" (
+         call:_log "%DATE% %TIME:~0,8%" "%_log_info%" %3
+         call:_log "%DATE% %TIME:~0,8%" "%_log_info%" %3 >> %_LOGFILE%
+      )
+   ) & endlocal
+   goto:eof
+
+:_log_debug
+   setlocal
+   set _LOGMODE=%~1
+   set _LOGFILE=%~2
+   if %_LOG_LEVEL% GEQ %LogLevels[DEBUG]% (
+      if "%_LOGMODE%"=="CONSOLE" call:_log "%DATE% %TIME:~0,8%" "%_log_debug%" %3
+      if "%_LOGMODE%"=="FILE" call:_log "%DATE% %TIME:~0,8%" "%_log_debug%" %3>>%_LOGFILE%
+      if "%_LOGMODE%"=="BOTH" (
+         call:_log "%DATE% %TIME:~0,8%" "%_log_debug%" %3
+         call:_log "%DATE% %TIME:~0,8%" "%_log_debug%" %~3>>%_LOGFILE%
+      )
+   ) & endlocal
+   goto:eof
+
+:_log_trace
+   setlocal
+   set _LOGMODE=%~1
+   set _LOGFILE=%~2
+   if %_LOG_LEVEL% GEQ %LogLevels[TRACE]% (
+      if "%_LOGMODE%"=="CONSOLE" call:_log "%DATE% %TIME:~0,8%" "%_log_trace%" %3
+      if "%_LOGMODE%"=="FILE" call:_log "%DATE% %TIME:~0,8%" "%_log_trace%" %3>>%_LOGFILE%
+      if "%_LOGMODE%"=="BOTH" (
+         call:_log "%DATE% %TIME:~0,8%" "%_log_trace%" %3
+         call:_log "%DATE% %TIME:~0,8%" "%_log_trace%" %~3>>%_LOGFILE%
+      )
+   )  & endlocal
+   goto:eof
+
+:_log_warning
+   setlocal
+   if "%_LOG_WARNINGS%"=="TRUE" (
+      if %_LOG_LEVEL% GEQ %LogLevels[INFO]% (
+         if "%_LOGMODE%"=="CONSOLE" call:_log "%DATE% %TIME:~0,8%" "%_log_warning%" %3
+         if "%_LOGMODE%"=="FILE" call:_log "%DATE% %TIME:~0,8%" "%_log_warning%" %3>>%_LOGFILE%
+         if "%_LOGMODE%"=="BOTH" (
+            call:_log "%DATE% %TIME:~0,8%" "%_log_warning%" %3
+            call:_log "%DATE% %TIME:~0,8%" "%_log_warning%" %~3>>%_LOGFILE%
+         )
+      )
+   ) & endlocal
+   goto:eof
+
+:_log_error
+   setlocal
+   @REM setting Errorlevel
+   if not "%4." == "." (
+      set _ERR=^[%~4^] ) else (
+   @REM reset to %_default_error% if no Errorlevel was passed
+   set _ERR=^[%_default_error%^]
+   )
+   if %_LOG_LEVEL% GEQ %LogLevels[INFO]% (
+      @REM call:_log "%~1" "%~2" "%DATE% %TIME:~0,8%" "%_log_error%" %3 "%_ERR%"
+      if "%_LOGMODE%"=="CONSOLE" call:_log "%DATE% %TIME:~0,8%" "%_log_error%" %3  "%_ERR%"
+      if "%_LOGMODE%"=="FILE" call:_log "%DATE% %TIME:~0,8%" "%_log_error%" %3  "%_ERR%">>%_LOGFILE%
+      if "%_LOGMODE%"=="BOTH" (
+         call:_log "%DATE% %TIME:~0,8%" "%_log_error%" %3
+         call:_log "%DATE% %TIME:~0,8%" "%_log_error%" %~3>>%_LOGFILE%
+      )
+   ) & endlocal
+   goto:eof
+
+:_usage
+   @echo.
+   @echo.Usage: %~1 (options) [params]. Type %~1 -h for more information.
+   goto:eof
+
+@REM =====================================================================
+@REM processing options
+
+@REM parse options
+:_parse_config_options
+set _THIS=%~n0:_parse_config_options
+set _OPTIONS=%1
+set _OPT_VAL=%_OPTIONS:"=%
+set _OPT_VAL=%_OPT_VAL:+=,%
+set _OPT_VAL=%_OPT_VAL:/=%
+call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: _OPTIONS=%_OPT_VAL%"
+set _PROJECT_SET=%~2
+set _TICKET_SET=%~3
+set _KEEP_FILES_SET=%~4
+set _CREATE_FOLDER_SET=%~5
+set _LOG_LEVEL_SET=%~6
+setlocal enabledelayedexpansion
+for %%g in (%_OPT_VAL%) do (
+   call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: Check option: %%g"
+    for /f "tokens=1,2 delims=:" %%x in ('@echo %%g') do (
+        set _CONFIG_OPTION=%%x
+        set _CONFIG_VALUE=%%y
+        if [!_CONFIG_VALUE!]==[] (
+           call :_log_error "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: _CONFIG_VALUE empty!"
+           %_ex_error%
+           )
+        call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: _CONFIG_OPTION=!_CONFIG_OPTION!"
+        call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: _CONFIG_VALUE=!_CONFIG_VALUE!"
+        call :_check_option "!_CONFIG_OPTIONS!" "!_CONFIG_OPTION!"
+        if !ERRORLEVEL! NEQ 0 (
+            call :_log_error "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: Invalid Option: "!_CONFIG_OPTION!"" "!ERRORLEVEL!"
+            %_ex% 1
+        ) else (
+            call :_log_debug  "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: %_SCRIPT% Option check returned: !ERRORLEVEL!"
+            call :_log_debug  "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: Calling function :_!_CONFIG_OPTION! with !_CONFIG_VALUE!"
+            call :_!_CONFIG_OPTION! !_CONFIG_VALUE!
+        )
+   )
+)
+endlocal & set "%_PROJECT_SET%=%_PROJECT%" & set "%_TICKET_SET%=%_TICKET%" & set "%_KEEP_FILES_SET%=%_KEEP_FILES%" & set "%_CREATE_FOLDER_SET%=%_CREATE_IF_NOT_EXISTS%" & set "%_LOG_LEVEL_SET%=%_LOG_LEVEL%" & %_ex% %ERRORLEVEL%
+   goto:eof
+
+@REM =====================================================================
+@REM parse MALE options
+:_parse_make_options
+set _THIS=%~n0:_parse_make_options
+set _OPTION_VAL=%~1
+set _OPTION_LIST=%~2
+call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: _OPTION_LIST=%_OPTION_LIST% _OPTION_VAL=%_OPTION_VAL%"
+setlocal enabledelayedexpansion
+for %%g in (%_OPTION_VAL%) do (
+   call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: Check option: %%g"
+      call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: _MAKE_OPTION_LIST=!_OPTION_LIST!"
+      call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: _MAKE_VALUE=!_OPTION_VAL!"
+      call :_check_option "!_OPTION_LIST!" "!_OPTION_VAL!"
+      if !ERRORLEVEL! NEQ 0 (
+         call :_log_error "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: Invalid Option: "!_OPTION_VAL!"" "!ERRORLEVEL!"
+         %_ex% 1
+      ) else (
+         call :_log_debug "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: %_SCRIPT% Option check returned: !ERRORLEVEL!"
+      )
+   )
+endlocal & %_ex% %ERRORLEVEL%
+   goto:eof
+
+@REM =====================================================================
+@REM check option arguments against array of valid values (exact match)
+:_check_option_value
+set _THIS=%~n0:_check_option_value
+set _VALUE=%~1
+set _VALUELIST=%2
+set _NOTFOUND_SET=%~3
+set NOTFOUND=
+setlocal enabledelayedexpansion
+set NOTFOUND=1
+call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: _VALUELIST=%_VALUELIST:"=% _VALUE=%_VALUE%"
+for %%g in (%_VALUELIST:"=%) do (
+   call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS% [%%g] = [!_VALUE!]"
+   if %%g==!_VALUE! set NOTFOUND=0
+)
+endlocal & call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS% [%NOTFOUND%]" & set "%_NOTFOUND_SET%=%NOTFOUND%" & %_ex% %NOTFOUND%
+goto:eof
+
+@REM =====================================================================
+@REM get ticket name from project if contained
+:_get-ticket-from-project
+   set _THIS=%~n0:_get-ticket-from-project
+   set PRJKEYS=%1
+   set PRJ=%~2
+   @REM check via regexp
+   call :_check_option_r %PRJKEYS% "%PRJ%"
+   set _ERR=%ERRORLEVEL%
+   call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: Return: %_ERR%"
+   if "%_ERR%"=="0" (
+      call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: Ticketprefix found, so continue..."
+      setlocal enabledelayedexpansion
+      set TICKET=
+      for /f "tokens=1,2 delims=_" %%t in ('@echo %PRJ%') do (
+         call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: TICKET: %%t"
+         set TICKET=%%t
+      )
+   )
+   endlocal & set "_TICKET=%TICKET%" & %_ex_ok%
+   goto:eof
+
+@REM check option arguments against array of valid values (exact match)
+:_check_option
+   set _THIS=%~n0:_check_option
+    set NOTFOUND=
+    setlocal enabledelayedexpansion
+    set NOTFOUND=1
+    set _OPTIONLIST=%1
+   call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: _OPTIONLIST=%_OPTIONLIST:"=%"
+    set _OPTION=%~2
+    for %%g in (%_OPTIONLIST:"=%) do (
+      call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS% %%g = !_OPTION!"
+      if %%g==!_OPTION! set NOTFOUND=0
+    )
+   endlocal & %_ex% %NOTFOUND%
+   goto:eof
+
+@REM check option arguments against array with regexp
+:_check_option_r
+   set _THIS=%~n0:_check_option_r
+   set NOTFOUND=
+   set KEYS=%~1
+   set VAL=%~2
+   call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: Keys: %KEYS%  Value: %VAL%"
+   setlocal enabledelayedexpansion
+   set NOTFOUND=1
+   for %%g in (%KEYS:"=%) do (
+      call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS%: Checking Key %%g"
+      echo %VAL% | findstr /R "%%g">nul & set NOTFOUND=%ERRORLEVEL%
+   )
+   endlocal & %_ex% %NOTFOUND%
+   goto:eof
+
+
+:_st
+   call :_set _TICKET %~1
+   goto:eof
+
+:_set-ticket
+   call :_set _TICKET %~1
+   goto:eof
+
+:_sp
+   call :_set _PROJECT %~1
+   goto:eof
+
+:_set-project
+   call :_set _PROJECT %~1
+   goto:eof
+
+:_sk
+   call :_set _KEEP_FILES %~1
+   goto:eof
+
+:_set-keep-files
+   call :_set _KEEP_FILES %~1
+   goto:eof
+
+:_sce
+   call :_set _CREATE_IF_NOT_EXISTS %~1
+   goto:eof
+
+:_set-create-if-not-exist
+   call :_set _CREATE_IF_NOT_EXISTS %~1
+   goto:eof
+
+
+@REM main _set function
+:_set
+   call set "%~1=%~2"
+   goto:eof
+
+:_gp
+   call :_get %~1
+   goto:eof
+
+:_get-project
+   call :_get %~1
+   goto:eof
+
+@REM main _get function
+:_get
+   set _THIS=%~n0:_get
+   call :_log_trace "%_LOG_MODE%" "%_LOG_FILE%" "%_THIS% Getting %~1"
+   set | findstr /R "^%~1=.*$"
+   set /A _RC=%ERRORLEVEL%*-1
+   %_ex% %_RC%
+   goto:eof
+
+@REM Utility Functions
+:_get-chr-array-length
+   %_UTILS% %*
+   goto:eof
+
+:_get-int-array-length
+   %_UTILS% %*
+   goto:eof
+
+:_get-array-length
+   %_UTILS% %*
+   goto:eof
+
+@REM ==========================================================================
+@REM exit Functions
+%_ex%
+ 
+"@REM oad.ini"  
+  
+; ==========================================================================
+; odev.ini (overwrites defaults if set)
+; [Project]
+_PROJECT=
+_PROJECT_ROOT=U:\git\WWS\_DSD\Projects
+; parent folder to your projects (must provide no leading, but a trailing \)
+_PROJECT_FOLDER_PREFIX=WWS\
+_PROJECT_CONF=.project.conf
+_PROJECT_KEYS="APEX-,SWE-,PIA-,TRAIN"
+_PROJECT_DOC_DIR=DOC
+; place sub-subfolders that contain \ at end of string
+_PROJECT_SUBFOLDERS=ARC,ARC\Builds,ARC\Sources,ARC\Documents,BLD,DOC,LIB,LOG,SRC,TMP
+_GITIGNORE_OBJECTS=ARC,LOG,TMP
+; Encoding and Codepage
+; [Encoding]
+_ENCODING=.AL32UTF8
+_CODEPAGE=65001
+; [Options]
+; Levels: 0=OFF 1=INFO 2=DEBUG 3=TRACE
+_LOG_LEVEL=1
+; log warnings to console [TRUE|FALSE]
+_LOG_WARNINGS=TRUE
+; _KEEP_FILES [NONE|ARCHIVE|MOVE]
+_KEEP_FILES=ARCHIVE
+; Folder and File handling
+_CREATE_IF_NOT_EXISTS=TRUE
+_CREATE_GITIGNORE=TRUE
+_CREATE_README=TRUE
+_CREATE_HTDOC=TRUE
+_CREATE_HELP=TRUE 
+"@REM .gitignore"  
+  
+
+_current_project
+log
+tmp
+arc
+ 
+"@REM oad_config.cmd"  
+  
 @REM ---------------------------------------------------------------------
 @REM odev_config.cmd
 @echo off
@@ -1386,20 +1450,35 @@ goto:eof
 @REM endlocal
 @REM exit /b ERRORLEVEL
 %_ex% %ERRORLEVEL%
-
-"@REM README.txt"
-
-
-Readme for "oad"
-
-Description
-See: U:\git\WWS\_DSD\Projects\OAD\doc\oad_help.txt
-or U:\git\WWS\_DSD\Projects\OAD\doc\README.md
-for more information...
-
-EOF
-
-
-"@REM _current_project"
-
-_PROJECT=JIRA-1234_APX_GRP
+ 
+"@REM oaddef.cmd"  
+  
+@REM ==========================================================================
+@REM Script Defaults
+set _PROJECT=
+set _PROJECT_ROOT=C:\%USERPROFILE%\Projects
+@REM parent folder to your projects (must provide no leading, but a trailing \)
+set _PROJECT_FOLDER_PREFIX=
+set _PROJECT_CONF=.project.conf
+set _PROJECT_SUBFOLDERS=ARC,ARC\Builds,ARC\Sources,ARC\Documents,BLD,DOC,LIB,LOG,SRC,TMP
+set _GITIGNORE_OBJECTS=arc,log,tmp
+set _PROJECT_KEYS="JIRA-,APEX-,ORA-"
+set _PROJECT_DOC_DIR=DOC
+@REM Levels: 0=OFF 1=INFO 2=DEBUG 3=TRACE
+set _LOG_LEVEL=1
+@REM log warnings to console
+set _LOG_WARNINGS=TRUE
+@REM Encoding and Codepage
+set _ENCODING=.AL32UTF8
+set _CODEPAGE=65001
+set _FOLDERS=log,tmp,src
+set _KEEP_FILES=FALSE
+set _CREATE_IF_NOT_EXISTS=FALSE
+set _CREATE_GITIGNORE=FALSE
+set _CREATE_README=TRUE
+set _CREATE_HTDOC=FALSE
+set _CREATE_HELP=FALSE 
+"@REM _current_project"  
+  
+_PROJECT=SWE-1234_APX_GRPO
+ 
