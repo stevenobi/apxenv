@@ -3,7 +3,6 @@
 #
 # wlsforms startup script for Forms12 Weblogic
 #
-# (c) 2018 Trivadis GmbH (SOB)
 #
 # chkconfig: chkconfig: 2345 55 15
 # description: weblogic
