@@ -2,7 +2,7 @@
 #
 # wlsforms startup script for Forms12 Weblogic
 #
-# (c) 2018 Trivadis GmbH (SOB)
+# (c) 2018 sobermeyer
 #
 # chkconfig: 2345 55 15
 # description: forms weblogic start stop
@@ -11,7 +11,7 @@
 . /etc/rc.d/init.d/functions
 
 ORACLE_USER=oracle
-SCRIPT=/u00/app/oracle/tvdtoolbox/tvdwls/FormsStartStop.sh
+SCRIPT=/u01/app/oracle/weblogic/wls/oracle_forms/FormsStartStop.sh
 
 case "$1" in
 start)
@@ -36,4 +36,5 @@ exit $?
 # ./rc.d/rc4.d/S55oracle_forms
 # ./rc.d/rc5.d/S55oracle_forms
 # ./rc.d/rc6.d/K15oracle_forms
+
 
